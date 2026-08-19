@@ -13,9 +13,12 @@ if 'pagina_actual' not in st.session_state:
 
 st.sidebar.title("Menú de Navegación")
 
-# 1. Opción suelta: Inicio
+# 1. Opciones principales en la barra lateral
 if st.sidebar.button("🏠 Inicio", use_container_width=True):
     st.session_state.pagina_actual = "Inicio"
+
+if st.sidebar.button("👥 Quiénes somos", use_container_width=True):
+    st.session_state.pagina_actual = "Quiénes somos"
 
 # 2. Categoría Desplegable: Caracterización Mineralógica (Solo Oxidados)
 with st.sidebar.expander("🔬 Caracterización Mineralógica", expanded=True):
@@ -49,6 +52,12 @@ with st.sidebar.expander("🧪 Hidrometalurgia", expanded=True):
         
     if st.button("🧮 Calculadora de Aglomeración", use_container_width=True):
         st.session_state.pagina_actual = "Calculadora de Aglomeración"
+
+    if st.button("🧪 Preparación de Solución LX", use_container_width=True):
+        st.session_state.pagina_actual = "Preparación de Solución LX"
+
+    if st.button("🧲 Extracción por Solventes", use_container_width=True):
+        st.session_state.pagina_actual = "Extracción por Solventes"
 
 seccion = st.session_state.pagina_actual
 
@@ -146,6 +155,42 @@ if seccion == "Inicio":
     process_card("🔬", "CARACTERIZACIÓN", "MINERALES OXIDADOS.", col1, "rgba(0, 191, 255, 0.3)")
     process_card("⛰️", "CONMINUCIÓN", "REDUCCIÓN DE TAMAÑO DEL MINERAL.", col2, "rgba(255, 255, 255, 0.3)")
     process_card("🧪", "HIDROMETALURGIA", "AGLOMERACIÓN, LIXIVIACIÓN, SX Y EW.", col3, "rgba(74, 222, 128, 0.3)")
+
+
+# =====================================================================
+# --- PÁGINA: QUIÉNES SOMOS ---
+# =====================================================================
+elif seccion == "Quiénes somos":
+    st.title("👥 Quiénes Somos")
+    st.write("Conoce al equipo detrás del desarrollo de esta plataforma enfocada en la optimización y cálculo de procesos metalúrgicos para minerales oxidados.")
+    
+    st.markdown("---")
+    st.markdown("### 🎓 Autores del Proyecto de Tesis")
+    st.write("Esta plataforma digital forma parte de nuestra idea y desarrollo de tesis orientada a la ingeniería de procesos y metalurgia extractiva.")
+    
+    col_t1, col_t2 = st.columns(2)
+    
+    with col_t1:
+        st.markdown(
+            """
+            <div style="background-color: #1e222d; padding: 30px; border-radius: 16px; text-align: center; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); border-bottom: 4px solid #3b82f6;">
+                <div style="width: 90px; height: 90px; border-radius: 50%; background-color: #3b82f6; margin: 0 auto 18px auto; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);">👨‍🎓</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">Héctor Díaz</div>
+                <div style="font-size: 1rem; color: #38bdf8; font-weight: 600;">Estudiante Tesista</div>
+            </div>
+            """, unsafe_allow_html=True
+        )
+        
+    with col_t2:
+        st.markdown(
+            """
+            <div style="background-color: #1e222d; padding: 30px; border-radius: 16px; text-align: center; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); border-bottom: 4px solid #10b981;">
+                <div style="width: 90px; height: 90px; border-radius: 50%; background-color: #10b981; margin: 0 auto 18px auto; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);">👨‍🎓</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">Nicolás Pérez</div>
+                <div style="font-size: 1rem; color: #34d399; font-weight: 600;">Estudiante Tesista</div>
+            </div>
+            """, unsafe_allow_html=True
+        )
 
 
 # =====================================================================
@@ -835,11 +880,11 @@ elif seccion == "Procesos Hidrometalúrgicos":
 
 
 # =====================================================================
-# --- PÁGINA: CALCULADORA DE AGLOMERACIÓN (DIAGRAMA PERFECTO CON CORRECCIÓN DE HUMEDAD) ---
+# --- PÁGINA: CALCULADORA DE AGLOMERACIÓN ---
 # =====================================================================
 elif seccion == "Calculadora de Aglomeración":
     st.title("🧮 Simulador y Diagrama de Balance de Masas: Aglomeración")
-    st.write("Modifica los flujos de entrada. El diagrama interactivo calculará instantáneamente todas las corrientes y el porcentaje real de humedad considerando tanto el agua como el ácido sulfúrico.")
+    st.write("Modifica los flujos de entrada. El diagrama interactivo calculará instantáneamente todas las corrientes y el porcentaje real de humedad de salida.")
     
     st.markdown("---")
     
@@ -859,14 +904,14 @@ elif seccion == "Calculadora de Aglomeración":
         
     with col_in3:
         tipo_agua_adic = st.radio("Unidad Agua Adicional:", ["kg/h", "ton/h", "ton/min"])
-        val_agua_adic = st.number_input("Valor de Agua Adicional", min_value=0.0, value=0.5, step=0.1) # por defecto 0.5 ton/min = 30 ton/h
+        val_agua_adic = st.number_input("Valor de Agua Adicional", min_value=0.0, value=0.5, step=0.1)
         
     with col_in4:
         tipo_acido = st.radio("Unidad de Ácido H₂SO₄:", ["kg/h", "ton/h", "kg/ton de seco"])
         val_acido = st.number_input("Valor de Ácido H₂SO₄", min_value=0.0, value=33500.0, step=500.0)
 
     # -------------------------------------------------------------
-    # CÁLCULOS DE BALANCE Y HUMEDAD CORREGIDA
+    # CÁLCULOS DE BALANCE
     # -------------------------------------------------------------
     if tipo_agua_adic == "kg/h":
         agua_adicional_tph = val_agua_adic / 1000.0
@@ -899,17 +944,17 @@ elif seccion == "Calculadora de Aglomeración":
     agua_total_salida_tph = agua_mineral_tph + agua_adicional_tph
     mineral_aglomerado_tph = mineral_humedo_tph + agua_adicional_tph + acido_tph
     
-    # CORRECCIÓN SOLICITADA: Contar todos los líquidos de entrada (agua + ácido sulfúrico) para el % de humedad de salida
+    # % Humedad de salida contando todos los líquidos de entrada (agua mineral + agua adicional + ácido)
     liquidos_totales_tph = agua_mineral_tph + agua_adicional_tph + acido_tph
     humedad_salida_pct = (liquidos_totales_tph / mineral_aglomerado_tph) * 100.0 if mineral_aglomerado_tph > 0 else 0.0
 
     # -------------------------------------------------------------
-    # REPRESENTACIÓN VISUAL EXACTA
+    # REPRESENTACIÓN VISUAL PERFECTA
     # -------------------------------------------------------------
     st.markdown("---")
     st.markdown("### 🔄 Diagrama del Proceso de Aglomeración (Tiempo Real)")
     
-    col_d1, col_arrow_in, col_d2, col_arrow_out, col_d3 = st.columns([3, 0.8, 2.6, 0.8, 3])
+    col_d1, col_d2, col_d3 = st.columns([3.5, 3.2, 3.5])
 
     with col_d1:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -946,16 +991,13 @@ elif seccion == "Calculadora de Aglomeración":
                 """, unsafe_allow_html=True
             )
 
-    with col_arrow_in:
-        st.markdown("<br><br><br><div style='text-align: center; color: white; font-size: 2.2rem; font-weight: bold;'>➔</div>", unsafe_allow_html=True)
-
     with col_d2:
         col_sup1, col_sup2 = st.columns(2)
         with col_sup1:
             st.markdown(
                 f"""
-                <div style="background-color: #1e222d; border: 2px solid #64748b; padding: 6px; border-radius: 8px; text-align: center; font-size: 0.7rem;">
-                    <span style="color: #cbd5e1; font-weight: bold;">Masa agua adic.</span><br>
+                <div style="background-color: #1e222d; border: 2px solid #64748b; padding: 8px; border-radius: 8px; text-align: center; font-size: 0.75rem;">
+                    <span style="color: #cbd5e1; font-weight: bold;">Masa de agua adicional</span><br>
                     <b style="color: white;">{agua_adicional_tph:.2f} t/h</b>
                 </div>
                 <div style="text-align: center; color: white; font-weight: bold; line-height: 1;">↓</div>
@@ -964,7 +1006,7 @@ elif seccion == "Calculadora de Aglomeración":
         with col_sup2:
             st.markdown(
                 f"""
-                <div style="background-color: #1e222d; border: 2px solid #64748b; padding: 6px; border-radius: 8px; text-align: center; font-size: 0.7rem;">
+                <div style="background-color: #1e222d; border: 2px solid #64748b; padding: 8px; border-radius: 8px; text-align: center; font-size: 0.75rem;">
                     <span style="color: #cbd5e1; font-weight: bold;">Masa de H2SO4</span><br>
                     <b style="color: white;">{acido_tph:.2f} t/h</b>
                 </div>
@@ -972,16 +1014,19 @@ elif seccion == "Calculadora de Aglomeración":
                 """, unsafe_allow_html=True
             )
             
-        st.markdown(
-            """
-            <div style="background-color: #2563eb; color: white; padding: 35px 10px; border-radius: 20px; text-align: center; box-shadow: 0 0 25px rgba(37, 99, 235, 0.6); border: 2px solid #93c5fd; margin-top: 5px;">
-                <div style="font-size: 1.3rem; font-weight: 900; font-style: italic;">Aglomerador</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-
-    with col_arrow_out:
-        st.markdown("<br><br><br><div style='text-align: center; color: white; font-size: 2.2rem; font-weight: bold;'>➔</div>", unsafe_allow_html=True)
+        col_t_left, col_drum, col_t_right = st.columns([1, 4, 1])
+        with col_t_left:
+            st.markdown("<br><div style='color: white; font-size: 1.8rem; font-weight: bold;'>➔</div>", unsafe_allow_html=True)
+        with col_drum:
+            st.markdown(
+                """
+                <div style="background-color: #2563eb; color: white; padding: 35px 10px; border-radius: 20px; text-align: center; box-shadow: 0 0 25px rgba(37, 99, 235, 0.6); border: 2px solid #93c5fd; margin-top: 5px;">
+                    <div style="font-size: 1.3rem; font-weight: 900; font-style: italic;">Aglomerador</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+        with col_t_right:
+            st.markdown("<br><div style='color: white; font-size: 1.8rem; font-weight: bold;'>➔</div>", unsafe_allow_html=True)
 
     with col_d3:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -1003,6 +1048,182 @@ elif seccion == "Calculadora de Aglomeración":
     res_c2.metric("Agua del Mineral", f"{agua_mineral_tph:.2f} ton/h")
     res_c3.metric("Mineral Húmedo Total", f"{mineral_humedo_tph:.2f} ton/h")
     res_c4.metric("Mineral Aglomerado Salida", f"{mineral_aglomerado_tph:.2f} ton/h")
+
+
+# =====================================================================
+# --- PÁGINA: PREPARACIÓN DE SOLUCIÓN PARA LIXIVIACIÓN (LX) POR pH ---
+# =====================================================================
+elif seccion == "Preparación de Solución LX":
+    st.title("🧪 Preparación y Dosificación de Solución para Lixiviación (LX) por pH")
+    st.write("Calcula los caudales de ácido sulfúrico ($H_2SO_4$) y agua requeridos para alcanzar un **pH objetivo** en la solución de riego de lixiviación.")
+    
+    st.latex(r"[\text{H}^+] = 10^{-\text{pH}} \quad (\text{mol/L}) \implies C_{\text{ácido}} = [\text{H}^+] \cdot \text{PM}_{H_2SO_4} / 2 \quad (\text{g/L})")
+    
+    st.markdown("---")
+    st.markdown("### 📥 Parámetros de Diseño y Operación")
+    
+    c_p1, c_p2 = st.columns(2)
+    with c_p1:
+        q_solucion_objetivo = st.number_input("Caudal de Solución Deseado ($Q$) [m³/h]", min_value=0.1, value=1000.0, step=10.0, format="%.2f")
+        ph_objetivo = st.number_input("pH Objetivo de la Solución", min_value=0.0, max_value=7.0, value=0.50, step=0.1, format="%.2f")
+    with c_p2:
+        pureza_acido_pct = st.number_input("Pureza Comercial del Ácido H₂SO₄ [%]", min_value=50.0, max_value=100.0, value=98.0, step=0.5, format="%.2f")
+        densidad_acido = st.number_input("Densidad del Ácido Comercial [t/m³ o g/cm³]", min_value=1.0, max_value=2.5, value=1.84, step=0.01, format="%.2f")
+
+    # Cálculos basados en pH
+    h_conc_mol_l = 10.0 ** (-ph_objetivo)
+    g_pl_acido_puro = (h_conc_mol_l * 98.079) / 2.0 
+    
+    acido_puro_kg_h = g_pl_acido_puro * q_solucion_objetivo
+    pureza_fraccion = pureza_acido_pct / 100.0
+    acido_comercial_t_h = (acido_puro_kg_h / pureza_fraccion) / 1000.0
+    volumen_acido_m3_h = acido_comercial_t_h / densidad_acido
+    caudal_agua_m3_h = q_solucion_objetivo - volumen_acido_m3_h
+
+    st.markdown("---")
+    st.markdown("### 📊 Resultados de Dosificación por pH")
+    
+    r_c1, r_c2 = st.columns(2)
+            
+    with r_c1:
+        st.markdown(
+            f"""
+            <div style="background-color: #1e222d; padding: 20px; border-radius: 10px; border-left: 5px solid #f59e0b; text-align: center;">
+                <p style="color: #a1aab5; margin: 0; font-size: 0.95rem;">Volumen de Ácido (m³/h)</p>
+                <h2 style="color: white; margin: 5px 0;">{volumen_acido_m3_h:.2f}</h2>
+                <p style="color: #facc15; margin: 0; font-weight: bold;">m³ / hora</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    with r_c2:
+        st.markdown(
+            f"""
+            <div style="background-color: #1e222d; padding: 20px; border-radius: 10px; border-left: 5px solid #10b981; text-align: center;">
+                <p style="color: #a1aab5; margin: 0; font-size: 0.95rem;">Caudal de Agua (m³/h)</p>
+                <h2 style="color: white; margin: 5px 0;">{caudal_agua_m3_h:.2f}</h2>
+                <p style="color: #34d399; margin: 0; font-weight: bold;">m³ / hora</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.info(f"💡 Para preparar un caudal de **{q_solucion_objetivo:.2f} m³/h** con un **pH de {ph_objetivo:.2f}** (equivalente a ~{g_pl_acido_puro:.2f} g/L de $H_2SO_4$ puro), se deben mezclar **{caudal_agua_m3_h:.2f} m³/h de agua** con **{volumen_acido_m3_h:.2f} m³/h de ácido sulfúrico**.")
+
+
+# =====================================================================
+# --- PÁGINA: EXTRACCIÓN POR SOLVENTES (SX) ---
+# =====================================================================
+elif seccion == "Extracción por Solventes":
+    st.title("🧲 Extracción por Solventes (SX)")
+    st.write("Selecciona la etapa específica del circuito de extracción por solventes para realizar los balances y cálculos operacionales correspondientes.")
+    
+    sub_sx = st.radio(
+        "Selecciona el sub-módulo de SX:",
+        ["Extracción", "Re-extracción", "Circuito Completo"],
+        horizontal=True
+    )
+    
+    st.markdown("---")
+    
+    if sub_sx == "Extracción":
+        st.subheader("💧 Módulo de Extracción (Extraction)")
+        st.write("Calcula la transferencia de cobre desde la solución rica (PLS) hacia la fase orgánica mediante un reactivo extractante.")
+        
+        st.latex(r"Cu^{2+}_{\text{(acuoso)}} + 2RH_{\text{(orgánico)}} \rightleftharpoons CuR_{2\text{(orgánico)}} + 2H^+_{\text{(acuoso)}}")
+        
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            pls_flow = st.number_input("Caudal de PLS ($Q_{\text{PLS}}$) [m³/h]", min_value=0.1, value=500.0, step=10.0, format="%.2f")
+            cu_pls = st.number_input("Ley de Cu en PLS ($Cu_{\text{PLS}}$) [g/L]", min_value=0.1, value=4.50, step=0.1, format="%.2f")
+        with col_ex2:
+            org_flow = st.number_input("Caudal de Orgánico ($Q_{\text{Org}}$) [m³/h]", min_value=0.1, value=400.0, step=10.0, format="%.2f")
+            cu_raff = st.number_input("Ley de Cu en Refino ($Cu_{\text{Raf}}$) [g/L]", min_value=0.0, value=0.15, step=0.01, format="%.2f")
+            
+        cu_carga_org = cu_pls + (pls_flow / org_flow) * (cu_pls - cu_raff)
+        recuperacion_ex = ((cu_pls - cu_raff) / cu_pls) * 100.0
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados de Extracción")
+        
+        res_ex1, res_ex2 = st.columns(2)
+        with res_ex1:
+            st.markdown(
+                f"""
+                <div style="background-color: #1e222d; padding: 20px; border-radius: 10px; border-left: 5px solid #3b82f6; text-align: center;">
+                    <p style="color: #a1aab5; margin: 0; font-size: 0.95rem;">Cobre en Orgánico Cargado</p>
+                    <h2 style="color: white; margin: 5px 0;">{cu_carga_org:.2f}</h2>
+                    <p style="color: #60a5fa; margin: 0; font-weight: bold;">g/L</p>
+                </div>
+                """, unsafe_allow_html=True)
+        with res_ex2:
+            st.markdown(
+                f"""
+                <div style="background-color: #1e222d; padding: 20px; border-radius: 10px; border-left: 5px solid #10b981; text-align: center;">
+                    <p style="color: #a1aab5; margin: 0; font-size: 0.95rem;">Eficiencia de Extracción</p>
+                    <h2 style="color: white; margin: 5px 0;">{recuperacion_ex:.2f}</h2>
+                    <p style="color: #34d399; margin: 0; font-weight: bold;">%</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+    elif sub_sx == "Re-extracción":
+        st.subheader("🔄 Módulo de Re-extracción (Stripping)")
+        st.write("Calcula la transferencia de cobre desde el orgánico cargado hacia el electrolito pobre utilizando una solución ácida de avance.")
+        
+        st.latex(r"CuR_{2\text{(orgánico)}} + 2H^+_{\text{(acuoso)}} \rightleftharpoons Cu^{2+}_{\text{(acuoso)}} + 2RH_{\text{(orgánico)}}")
+        
+        col_str1, col_str2 = st.columns(2)
+        with col_str1:
+            org_cargado_flow = st.number_input("Caudal de Orgánico Cargado [m³/h]", min_value=0.1, value=400.0, step=10.0, format="%.2f", key="oc_flow")
+            cu_org_cargado = st.number_input("Cu en Orgánico Cargado [g/L]", min_value=0.1, value=5.80, step=0.1, format="%.2f", key="coc_flow")
+        with col_str2:
+            electrolito_pobre_flow = st.number_input("Caudal de Electrolito Pobre ($Q_{\text{EP}}$) [m³/h]", min_value=0.1, value=100.0, step=5.0, format="%.2f")
+            cu_electrolito_pobre = st.number_input("Cu en Electrolito Pobre [g/L]", min_value=0.0, value=35.00, step=1.0, format="%.2f")
+            
+        cu_electrolito_rico = cu_electrolito_pobre + (org_cargado_flow / electrolito_pobre_flow) * (cu_org_cargado * 0.90)
+        
+        st.markdown("---")
+        st.markdown("### 📊 Resultados de Re-extracción")
+        
+        res_st1, res_st2 = st.columns(2)
+        with res_st1:
+            st.markdown(
+                f"""
+                <div style="background-color: #1e222d; padding: 20px; border-radius: 10px; border-left: 5px solid #f59e0b; text-align: center;">
+                    <p style="color: #a1aab5; margin: 0; font-size: 0.95rem;">Cu en Electrolito Rico (ELR)</p>
+                    <h2 style="color: white; margin: 5px 0;">{cu_electrolito_rico:.2f}</h2>
+                    <p style="color: #facc15; margin: 0; font-weight: bold;">g/L</p>
+                </div>
+                """, unsafe_allow_html=True)
+        with res_st2:
+            st.markdown(
+                f"""
+                <div style="background-color: #1e222d; padding: 20px; border-radius: 10px; border-left: 5px solid #a855f7; text-align: center;">
+                    <p style="color: #a1aab5; margin: 0; font-size: 0.95rem;">Relación de Caudales ($O/A$)</p>
+                    <h2 style="color: white; margin: 5px 0;">{(org_cargado_flow / electrolito_pobre_flow):.2f}</h2>
+                    <p style="color: #c084fc; margin: 0; font-weight: bold;">Adimensional</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+    else:  # Circuito Completo
+        st.subheader("🌐 Balance General del Circuito Completo de SX")
+        st.write("Simulación integrada de las etapas de Extracción y Re-extracción para evaluar el comportamiento global de la planta.")
+        
+        col_g1, col_g2 = st.columns(2)
+        with col_g1:
+            q_pls_tot = st.number_input("Caudal de PLS Total [m³/h]", min_value=0.1, value=500.0, step=10.0, format="%.2f", key="qp_tot")
+            ley_pls_tot = st.number_input("Ley de Cu en PLS [g/L]", min_value=0.1, value=4.50, step=0.1, format="%.2f", key="lp_tot")
+        with col_g2:
+            q_org_tot = st.number_input("Caudal de Orgánico Total [m³/h]", min_value=0.1, value=400.0, step=10.0, format="%.2f", key="qo_tot")
+            eficiencia_global = st.slider("Eficiencia Global Estimada del Circuito [%]", min_value=80.0, max_value=99.9, value=95.0, step=0.5)
+            
+        cu_recuperado_tph = (q_pls_tot * ley_pls_tot * (eficiencia_global / 100.0)) / 1000.0
+        
+        st.markdown("---")
+        st.markdown("### 📋 Resumen Global del Proceso SX")
+        
+        res_g1, res_g2, res_g3 = st.columns(3)
+        res_g1.metric("Caudal PLS", f"{q_pls_tot:.2f} m³/h")
+        res_g2.metric("Caudal Orgánico", f"{q_org_tot:.2f} m³/h")
+        res_g3.metric("Producción Est. Cobre", f"{cu_recuperado_tph:.2f} t/h")
 
 
 # =====================================================================
