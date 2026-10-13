@@ -39,7 +39,7 @@ from modulos.asistente import mostrar_asistente
 # ============================================================
 
 st.set_page_config(
-    page_title="Gestión de Procesos Metalúrgicos de Minerales Oxidados",
+    page_title="Calculadora de Procesos Metalúrgicos de Minerales Oxidados",
     page_icon="⚙️",
     layout="wide",
     initial_sidebar_state="expanded"
