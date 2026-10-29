@@ -13,10 +13,17 @@ import streamlit as st
 # ============================================================
 
 MALLAS_STD = {
+    '1"': 25000.0,
+    '3/4"': 19000.0,
+    '1/2"': 12500.0,
+    '3/8"': 9500.0,
+    '5/16"': 8000.0,
+    "4": 4750.0,
     "6": 3350.0,
     "10": 2000.0,
     "12": 1700.0,
     "14": 1400.0,
+    "16": 1180.0,
     "18": 1000.0,
     "20": 850.0,
     "30": 600.0,
@@ -65,13 +72,18 @@ def tarjeta_resultado(titulo, valor, unidad, color):
 
 def calcular_t80(df):
     """
-    Calcula T80 mediante interpolación semilogarítmica.
-    Devuelve None si el 80% pasante no está comprendido
-    dentro del intervalo experimental.
+    Calcula T80 mediante interpolación logarítmica
+    en ambos ejes: tamaño y porcentaje pasante.
+
+    Se utilizan porcentajes pasantes redondeados a
+    dos decimales, iguales a los mostrados en la tabla.
+
+    Devuelve None si no es posible interpolar el 80%.
     """
 
     datos = df.loc[
-        df["Abertura [µm]"] > 0,
+        (df["Abertura [µm]"] > 0)
+        & (df["Pasante acumulado [%]"] > 0),
         ["Abertura [µm]", "Pasante acumulado [%]"]
     ].copy()
 
@@ -79,7 +91,14 @@ def calcular_t80(df):
     datos = datos.sort_values("Abertura [µm]")
 
     x = datos["Abertura [µm]"].to_numpy(dtype=float)
-    y = datos["Pasante acumulado [%]"].to_numpy(dtype=float)
+
+    # IMPORTANTE:
+    # Se redondea a dos decimales para reproducir
+    # el procedimiento manual con la tabla visible.
+    y = np.round(
+        datos["Pasante acumulado [%]"].to_numpy(dtype=float),
+        2
+    )
 
     if len(x) < 2:
         return None
@@ -91,6 +110,7 @@ def calcular_t80(df):
         return None
 
     for i in range(len(x) - 1):
+
         x1, x2 = x[i], x[i + 1]
         y1, y2 = y[i], y[i + 1]
 
@@ -101,9 +121,27 @@ def calcular_t80(df):
             return float(x2)
 
         if y1 < 80 < y2 and y2 > y1:
+
+            # Interpolación logarítmica:
+            #
+            # (log(y2)-log(y1)) / (log(x2)-log(x1))
+            # =
+            # (log(80)-log(y1)) / (log(T80)-log(x1))
+
             log_t80 = np.log10(x1) + (
-                (80 - y1) / (y2 - y1)
-            ) * (np.log10(x2) - np.log10(x1))
+                (
+                    np.log10(80.0)
+                    - np.log10(y1)
+                )
+                /
+                (
+                    np.log10(y2)
+                    - np.log10(y1)
+                )
+            ) * (
+                np.log10(x2)
+                - np.log10(x1)
+            )
 
             return float(10 ** log_t80)
 
@@ -129,6 +167,7 @@ def convertir_unidad_rr():
     """Convierte ambos tamaños al cambiar de µm a mm."""
 
     nueva = st.session_state["rr_unidad"]
+
     anterior = st.session_state.get(
         "rr_unidad_anterior", "µm"
     )
@@ -172,7 +211,7 @@ def mostrar_chancado():
             ),
             "producto": (
                 "Reducción inicial del mineral, frecuentemente "
-                "hacia tamaños del orden de 100 a 150 mm."
+                "hacia tamaños del orden de 100 a 2000 mm."
             )
         },
         {
@@ -212,14 +251,13 @@ def mostrar_chancado():
     for columna, etapa in zip(columnas, etapas):
 
         with columna:
+
             color = etapa["color"]
             titulo = escape(etapa["titulo"])
             equipo = escape(etapa["equipo"])
             alimentacion = escape(etapa["alimentacion"])
             producto = escape(etapa["producto"])
 
-            # HTML en una sola línea lógica:
-            # evita que Markdown lo muestre como código.
             tarjeta = (
                 f'<div style="'
                 f'background:linear-gradient(145deg,#202938,#151c29);'
@@ -295,6 +333,12 @@ def mostrar_granulometria():
     # INGRESO DE DATOS
     # --------------------------------------------------------
 
+    columnas_antiguas = {
+        "Peso tamiz [g]": "Masa tamiz [g]",
+        "Peso tamiz + mineral [g]": "Masa tamiz + mineral [g]",
+        "Peso mineral [g]": "Masa mineral [g]"
+    }
+
     if "df_gran" not in st.session_state:
 
         st.session_state["df_gran"] = pd.DataFrame({
@@ -302,9 +346,19 @@ def mostrar_granulometria():
                 "6", "10", "12", "14",
                 "18", "30", "Fondo"
             ],
-            "Peso tamiz [g]": [0.0] * 7,
-            "Peso tamiz + mineral [g]": [0.0] * 7
+            "Masa tamiz [g]": [0.0] * 7,
+            "Masa tamiz + mineral [g]": [0.0] * 7
         })
+
+    else:
+
+        df_guardado = st.session_state["df_gran"]
+
+        if isinstance(df_guardado, pd.DataFrame):
+
+            st.session_state["df_gran"] = df_guardado.rename(
+                columns=columnas_antiguas
+            ).copy()
 
     st.markdown("### 1. Ingreso de Datos")
 
@@ -325,22 +379,23 @@ def mostrar_granulometria():
                 options=list(MALLAS_STD.keys()),
                 required=True
             ),
-            "Peso tamiz [g]": st.column_config.NumberColumn(
-                "Peso tamiz [g]",
+            "Masa tamiz [g]": st.column_config.NumberColumn(
+                "Masa tamiz [g]",
                 min_value=0.0,
                 format="%.2f"
             ),
-            "Peso tamiz + mineral [g]":
+            "Masa tamiz + mineral [g]":
                 st.column_config.NumberColumn(
-                    "Peso tamiz + mineral [g]",
+                    "Masa tamiz + mineral [g]",
                     min_value=0.0,
                     format="%.2f"
                 )
         },
-        key="editor_granulometria"
+        key="editor_granulometria_masa"
     )
 
     # Se invalida el T80 anterior hasta recalcularlo.
+
     st.session_state["t80_calculado"] = None
     st.session_state.pop("df_granulometria_2", None)
 
@@ -357,15 +412,17 @@ def mostrar_granulometria():
     # --------------------------------------------------------
 
     if df_valido["Malla"].duplicated().any():
+
         st.error(
             "Existen mallas repetidas. "
             "Cada malla debe aparecer una sola vez."
         )
+
         return
 
     columnas_masa = [
-        "Peso tamiz [g]",
-        "Peso tamiz + mineral [g]"
+        "Masa tamiz [g]",
+        "Masa tamiz + mineral [g]"
     ]
 
     df_valido[columnas_masa] = (
@@ -374,24 +431,31 @@ def mostrar_granulometria():
     )
 
     if df_valido[columnas_masa].isna().any().any():
+
         st.error(
             "Todas las masas deben ser valores numéricos."
         )
+
         return
 
     if (df_valido[columnas_masa] < 0).any().any():
-        st.error("Las masas no pueden ser negativas.")
+
+        st.error(
+            "Las masas no pueden ser negativas."
+        )
+
         return
 
     if (
-        df_valido["Peso tamiz + mineral [g]"]
-        < df_valido["Peso tamiz [g]"]
+        df_valido["Masa tamiz + mineral [g]"]
+        < df_valido["Masa tamiz [g]"]
     ).any():
 
         st.error(
-            "El peso del tamiz con mineral no puede "
-            "ser menor que el peso del tamiz vacío."
+            "La masa del tamiz con mineral no puede "
+            "ser menor que la masa del tamiz vacío."
         )
+
         return
 
     # --------------------------------------------------------
@@ -403,7 +467,11 @@ def mostrar_granulometria():
     )
 
     if df_valido["Abertura [µm]"].isna().any():
-        st.error("Se encontraron mallas no reconocidas.")
+
+        st.error(
+            "Se encontraron mallas no reconocidas."
+        )
+
         return
 
     df_valido = df_valido.sort_values(
@@ -411,28 +479,40 @@ def mostrar_granulometria():
         ascending=False
     ).reset_index(drop=True)
 
-    df_valido["Peso mineral [g]"] = (
-        df_valido["Peso tamiz + mineral [g]"]
-        - df_valido["Peso tamiz [g]"]
+    # Masa de mineral retenida en cada tamiz.
+
+    df_valido["Masa mineral [g]"] = (
+        df_valido["Masa tamiz + mineral [g]"]
+        - df_valido["Masa tamiz [g]"]
     )
 
-    peso_total = df_valido["Peso mineral [g]"].sum()
+    # Masa total del mineral.
 
-    if peso_total <= 0:
+    masa_total = df_valido["Masa mineral [g]"].sum()
+
+    if masa_total <= 0:
+
         st.warning(
             "Ingresa las masas de mineral para "
             "generar los resultados."
         )
+
         return
 
+    # Porcentaje retenido parcial.
+
     df_valido["Retenido parcial [%]"] = (
-        df_valido["Peso mineral [g]"]
-        / peso_total * 100.0
+        df_valido["Masa mineral [g]"]
+        / masa_total * 100.0
     )
+
+    # Porcentaje retenido acumulado.
 
     df_valido["Retenido acumulado [%]"] = (
         df_valido["Retenido parcial [%]"].cumsum()
     )
+
+    # Porcentaje pasante acumulado.
 
     df_valido["Pasante acumulado [%]"] = (
         100.0 - df_valido["Retenido acumulado [%]"]
@@ -443,14 +523,17 @@ def mostrar_granulometria():
     # --------------------------------------------------------
 
     st.markdown("---")
-    st.markdown("### 2. Tabla Granulométrica Calculada")
+
+    st.markdown(
+        "### 2. Tabla Granulométrica Calculada"
+    )
 
     st.dataframe(
         df_valido.style.format({
             "Abertura [µm]": "{:.2f}",
-            "Peso tamiz [g]": "{:.2f}",
-            "Peso tamiz + mineral [g]": "{:.2f}",
-            "Peso mineral [g]": "{:.2f}",
+            "Masa tamiz [g]": "{:.2f}",
+            "Masa tamiz + mineral [g]": "{:.2f}",
+            "Masa mineral [g]": "{:.2f}",
             "Retenido parcial [%]": "{:.2f}",
             "Retenido acumulado [%]": "{:.2f}",
             "Pasante acumulado [%]": "{:.2f}"
@@ -460,7 +543,7 @@ def mostrar_granulometria():
     )
 
     # --------------------------------------------------------
-    # T80
+    # T80: INTERPOLACIÓN LOGARÍTMICA CORREGIDA
     # --------------------------------------------------------
 
     df_curva = df_valido.loc[
@@ -470,13 +553,14 @@ def mostrar_granulometria():
     t80 = calcular_t80(df_curva)
 
     st.markdown("---")
+
     st.markdown("### 3. Resultados y Gráfico")
 
     col1, col2 = st.columns(2)
 
     col1.metric(
         "Masa total de mineral",
-        f"{peso_total:.2f} g"
+        f"{masa_total:.2f} g"
     )
 
     if t80 is not None:
@@ -494,7 +578,10 @@ def mostrar_granulometria():
 
     else:
 
-        col2.metric("T80 estimado", "No disponible")
+        col2.metric(
+            "T80 estimado",
+            "No disponible"
+        )
 
         st.warning(
             "No es posible interpolar el T80 con "
@@ -556,128 +643,304 @@ def mostrar_granulometria():
         )
 
     # --------------------------------------------------------
-    # EXPORTACIÓN
+    # EXPORTACIÓN EN EXCEL
     # --------------------------------------------------------
 
     st.markdown("---")
+
     st.markdown("### 4. Exportar Datos")
 
-    col_btn1, col_btn2 = st.columns(2)
+    output = io.BytesIO()
 
-    with col_btn1:
+    with pd.ExcelWriter(
+        output,
+        engine="xlsxwriter"
+    ) as writer:
 
-        if st.button(
-            "💾 Actualizar datos para Power BI",
-            use_container_width=True
-        ):
+        df_valido.to_excel(
+            writer,
+            index=False,
+            sheet_name="Resultados"
+        )
 
-            df_valido.to_csv(
-                "datos_granulometria.csv",
-                index=False,
-                sep=";",
-                decimal=",",
-                encoding="utf-8-sig"
-            )
+        workbook = writer.book
+        worksheet = writer.sheets["Resultados"]
 
-            st.success(
-                "Datos guardados en "
-                "'datos_granulometria.csv'."
-            )
+        formato_decimal = workbook.add_format({
+            "num_format": "0.00"
+        })
 
-    with col_btn2:
+        worksheet.set_column(
+            "B:H",
+            20,
+            formato_decimal
+        )
 
-        output = io.BytesIO()
+        worksheet.set_column("A:A", 12)
 
-        with pd.ExcelWriter(
-            output,
-            engine="xlsxwriter"
-        ) as writer:
+        if len(df_curva) >= 2:
 
-            df_valido.to_excel(
-                writer,
-                index=False,
-                sheet_name="Resultados"
-            )
-
-            workbook = writer.book
-            worksheet = writer.sheets["Resultados"]
-
-            formato_decimal = workbook.add_format({
-                "num_format": "0.00"
+            chart = workbook.add_chart({
+                "type": "scatter",
+                "subtype": "straight_with_markers"
             })
 
-            worksheet.set_column(
-                "B:H", 20, formato_decimal
+            filas_grafico = len(df_curva)
+
+            chart.add_series({
+                "name": "Curva Granulométrica",
+                "categories": [
+                    "Resultados",
+                    1, 3,
+                    filas_grafico, 3
+                ],
+                "values": [
+                    "Resultados",
+                    1, 7,
+                    filas_grafico, 7
+                ],
+                "marker": {
+                    "type": "circle",
+                    "size": 6
+                },
+                "line": {
+                    "color": "#1f77b4",
+                    "width": 1.5
+                }
+            })
+
+            chart.set_title({
+                "name": "Curva Granulométrica"
+            })
+
+            chart.set_x_axis({
+                "name": "Abertura [µm]",
+                "log_base": 10
+            })
+
+            chart.set_y_axis({
+                "name": "Pasante acumulado [%]",
+                "min": 0,
+                "max": 100
+            })
+
+            worksheet.insert_chart(
+                "J2",
+                chart,
+                {
+                    "x_scale": 1.4,
+                    "y_scale": 1.2
+                }
             )
-            worksheet.set_column("A:A", 12)
 
-            if len(df_curva) >= 2:
+    st.download_button(
+        "📥 Descargar Reporte en Excel",
+        data=output.getvalue(),
+        file_name="Reporte_Granulometria.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        use_container_width=True
+    )
 
-                chart = workbook.add_chart({
-                    "type": "scatter",
-                    "subtype": "straight_with_markers"
-                })
+    # --------------------------------------------------------
+    # EXPLICACIÓN DE RESULTADOS CON INTELIGENCIA ARTIFICIAL
+    # --------------------------------------------------------
 
-                # La tabla está ordenada de mayor
-                # a menor abertura. El fondo queda
-                # al final y se excluye del gráfico.
-                filas_grafico = len(df_curva)
+    st.markdown("---")
 
-                chart.add_series({
-                    "name": "Curva Granulométrica",
-                    "categories": [
-                        "Resultados",
-                        1, 3,
-                        filas_grafico, 3
-                    ],
-                    "values": [
-                        "Resultados",
-                        1, 7,
-                        filas_grafico, 7
-                    ],
-                    "marker": {
-                        "type": "circle",
-                        "size": 6
-                    },
-                    "line": {
-                        "color": "#1f77b4",
-                        "width": 1.5
-                    }
-                })
+    st.markdown(
+        "### 5. 🤖 Explicación del resultado con IA"
+    )
 
-                chart.set_title({
-                    "name": "Curva Granulométrica"
-                })
+    st.write(
+        "Solicita al asistente metalúrgico una interpretación "
+        "de la distribución granulométrica y del T80 calculado."
+    )
 
-                chart.set_x_axis({
-                    "name": "Abertura [µm]",
-                    "log_base": 10
-                })
+    # Firma de datos para invalidar respuestas anteriores.
 
-                chart.set_y_axis({
-                    "name": "Pasante acumulado [%]",
-                    "min": 0,
-                    "max": 100
-                })
+    firma_gran = tuple(
+        (
+            str(fila["Malla"]),
+            float(fila["Masa tamiz [g]"]),
+            float(fila["Masa tamiz + mineral [g]"])
+        )
+        for _, fila in df_valido.iterrows()
+    )
 
-                worksheet.insert_chart(
-                    "J2",
-                    chart,
-                    {
-                        "x_scale": 1.4,
-                        "y_scale": 1.2
-                    }
+    if st.session_state.get("gran_ia_firma") != firma_gran:
+
+        st.session_state["gran_ia_firma"] = firma_gran
+
+        st.session_state.pop(
+            "gran_ia_respuesta",
+            None
+        )
+
+        st.session_state.pop(
+            "gran_ia_modelo",
+            None
+        )
+
+    if st.button(
+        "🤖 Explicar resultado con IA",
+        key="gran_boton_explicar_ia",
+        use_container_width=True
+    ):
+
+        from modulos.asistente import (
+            obtener_api_key,
+            generar_respuesta,
+            interpretar_error
+        )
+
+        api_key = obtener_api_key()
+
+        if not api_key:
+
+            st.error(
+                "No se encontró la clave API de Gemini."
+            )
+
+            st.info(
+                "Configura GEMINI_API_KEY en "
+                ".streamlit/secrets.toml para activar "
+                "la explicación."
+            )
+
+        else:
+
+            columnas_ia = [
+                "Malla",
+                "Abertura [µm]",
+                "Masa mineral [g]",
+                "Retenido parcial [%]",
+                "Retenido acumulado [%]",
+                "Pasante acumulado [%]"
+            ]
+
+            tabla_ia = df_valido[columnas_ia].copy()
+
+            for columna in columnas_ia[1:]:
+
+                tabla_ia[columna] = tabla_ia[columna].map(
+                    lambda valor: f"{valor:.2f}"
                 )
 
-        st.download_button(
-            "📥 Descargar Reporte en Excel",
-            data=output.getvalue(),
-            file_name="Reporte_Granulometria.xlsx",
-            mime=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
-            use_container_width=True
+            detalle_t80 = (
+                f"{t80:.2f} µm"
+                if t80 is not None
+                else (
+                    "No disponible: el 80% pasante no puede "
+                    "interpolarse con los puntos experimentales "
+                    "disponibles."
+                )
+            )
+
+            pregunta_ia = (
+                "Eres un asistente especializado en ingeniería "
+                "metalúrgica, conminución y análisis granulométrico "
+                "de minerales. Interpreta únicamente los resultados "
+                "reales que entrega esta calculadora. "
+                "Responde en español.\n\n"
+
+                f"Masa total de mineral: {masa_total:.2f} g\n"
+
+                f"T80 estimado: {detalle_t80}\n\n"
+
+                "TABLA DE RESULTADOS:\n"
+
+                f"{tabla_ia.to_string(index=False)}\n\n"
+
+                "Explica: (1) qué mide el análisis granulométrico; "
+
+                "(2) cómo se obtienen la masa retenida, "
+                "el retenido parcial, el retenido acumulado "
+                "y el pasante acumulado; "
+
+                "(3) qué indican los datos acerca de la "
+                "distribución de tamaños; "
+
+                "(4) cómo se interpreta la curva de porcentaje "
+                "pasante en función de la abertura; "
+
+                "(5) el significado del T80 y su estimación "
+                "por interpolación logarítmica en ambos ejes, "
+                "si está disponible; "
+
+                "(6) las limitaciones de la interpretación "
+                "y su utilidad para el proceso de conminución.\n\n"
+
+                "Para calcular el T80 se utilizan los porcentajes "
+                "pasantes redondeados a dos decimales, tal como "
+                "aparecen en la tabla. La interpolación aplica "
+                "logaritmos tanto al tamaño de abertura como "
+                "al porcentaje pasante.\n\n"
+
+                "INSTRUCCIONES: No inventes datos ni conclusiones "
+                "experimentales que no estén respaldadas por la tabla. "
+
+                "No confundas el retenido con el pasante. "
+
+                "No calcules un T80 ficticio si no está disponible. "
+
+                "Muestra los valores numéricos con exactamente "
+                "dos decimales y las unidades correspondientes. "
+
+                "Explica de manera clara para estudiantes "
+                "de metalurgia."
+            )
+
+            indicador_ia = st.empty()
+
+            try:
+
+                respuesta_ia, modelo_ia = generar_respuesta(
+                    api_key=api_key,
+                    mensajes=[],
+                    pregunta=pregunta_ia,
+                    indicador=indicador_ia
+                )
+
+                st.session_state[
+                    "gran_ia_respuesta"
+                ] = respuesta_ia
+
+                st.session_state[
+                    "gran_ia_modelo"
+                ] = modelo_ia
+
+            except Exception as error:
+
+                st.error(
+                    interpretar_error(error)
+                )
+
+                with st.expander(
+                    "Ver detalles del error de IA"
+                ):
+
+                    st.code(
+                        f"{type(error).__name__}: {error}"
+                    )
+
+            finally:
+
+                indicador_ia.empty()
+
+    if st.session_state.get("gran_ia_respuesta"):
+
+        st.markdown(
+            st.session_state["gran_ia_respuesta"]
+        )
+
+        st.caption(
+            "Explicación generada con "
+            f"{st.session_state.get('gran_ia_modelo', 'Gemini')}. "
+            "Verifica la interpretación antes de aplicarla "
+            "a decisiones operacionales."
         )
 
 
@@ -797,6 +1060,7 @@ def mostrar_ley_bond():
             "El F80 debe ser mayor que el P80 "
             "para calcular la reducción de tamaño."
         )
+
         return
 
     # --------------------------------------------------------
@@ -819,6 +1083,7 @@ def mostrar_ley_bond():
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.markdown(
             tarjeta_resultado(
                 "Energía Específica",
@@ -830,6 +1095,7 @@ def mostrar_ley_bond():
         )
 
     with col2:
+
         st.markdown(
             tarjeta_resultado(
                 "Potencia Teórica",
@@ -841,6 +1107,7 @@ def mostrar_ley_bond():
         )
 
     with col3:
+
         st.markdown(
             tarjeta_resultado(
                 "Potencia Teórica",
@@ -962,6 +1229,7 @@ def mostrar_razon_reduccion():
         st.error(
             "El F80 debe ser mayor que el P80."
         )
+
         return
 
     # --------------------------------------------------------
@@ -971,19 +1239,24 @@ def mostrar_razon_reduccion():
     razon_reduccion = f80 / p80
 
     # Clasificación orientativa, no normativa.
+
     if razon_reduccion < 3:
+
         etapa = "Reducción de tamaño baja"
         color = "#64748b"
 
     elif razon_reduccion <= 7:
+
         etapa = "Reducción de tamaño moderada"
         color = "#3b82f6"
 
     elif razon_reduccion <= 15:
+
         etapa = "Reducción de tamaño elevada"
         color = "#f59e0b"
 
     else:
+
         etapa = "Reducción de tamaño muy elevada"
         color = "#10b981"
 
@@ -994,6 +1267,7 @@ def mostrar_razon_reduccion():
     col1, col2 = st.columns(2)
 
     with col1:
+
         st.markdown(
             tarjeta_resultado(
                 "Razón de Reducción (Rr)",
@@ -1005,6 +1279,7 @@ def mostrar_razon_reduccion():
         )
 
     with col2:
+
         st.markdown(
             tarjeta_resultado(
                 "Evaluación de Reducción",
@@ -1022,3 +1297,220 @@ def mostrar_razon_reduccion():
         "no determina de manera exclusiva el tipo "
         "de chancador o molino."
     )
+
+    # --------------------------------------------------------
+    # EXPLICACIÓN DEL CÁLCULO CON INTELIGENCIA ARTIFICIAL
+    # --------------------------------------------------------
+
+    st.markdown("---")
+
+    st.markdown(
+        "### 🤖 Explicación del resultado con IA"
+    )
+
+    st.write(
+        "Solicita al asistente metalúrgico una explicación "
+        "del cálculo realizado con tus valores de F80 y P80."
+    )
+
+    # --------------------------------------------------------
+    # CONTROL DE RESULTADOS DE IA
+    # --------------------------------------------------------
+
+    firma_calculo = (
+        float(f80),
+        float(p80),
+        unidad
+    )
+
+    if st.session_state.get("rr_ia_firma") != firma_calculo:
+
+        st.session_state["rr_ia_firma"] = firma_calculo
+
+        st.session_state.pop(
+            "rr_ia_respuesta",
+            None
+        )
+
+        st.session_state.pop(
+            "rr_ia_modelo",
+            None
+        )
+
+    # --------------------------------------------------------
+    # BOTÓN PARA CONSULTAR GEMINI
+    # --------------------------------------------------------
+
+    if st.button(
+        "🤖 Explicar resultado con IA",
+        key="rr_boton_explicar_ia",
+        use_container_width=True
+    ):
+
+        from modulos.asistente import (
+            obtener_api_key,
+            generar_respuesta,
+            interpretar_error
+        )
+
+        api_key = obtener_api_key()
+
+        if not api_key:
+
+            st.error(
+                "No se encontró la clave API de Gemini."
+            )
+
+            st.info(
+                "Configura GEMINI_API_KEY en "
+                ".streamlit/secrets.toml para activar "
+                "la explicación."
+            )
+
+        else:
+
+            # ------------------------------------------------
+            # PREPARACIÓN DE LA CONSULTA
+            # ------------------------------------------------
+
+            pregunta_ia = (
+                "Eres un asistente especializado en "
+                "ingeniería metalúrgica y conminución "
+                "de minerales oxidados de cobre.\n\n"
+
+                "Tu función es explicar exclusivamente "
+                "el siguiente cálculo REAL efectuado "
+                "por la calculadora de Razón de Reducción "
+                "de una plataforma metalúrgica.\n\n"
+
+                "DATOS DEL CÁLCULO:\n"
+
+                f"F80 = {f80:.2f} {unidad}\n"
+
+                f"P80 = {p80:.2f} {unidad}\n"
+
+                "Fórmula utilizada: Rr = F80 / P80\n"
+
+                f"Razón de reducción calculada: "
+                f"{razon_reduccion:.2f}\n"
+
+                f"Clasificación orientativa: {etapa}\n\n"
+
+                "EXPLICA LOS SIGUIENTES ASPECTOS:\n\n"
+
+                "1. Explica qué representa el F80 "
+                "en la alimentación del proceso.\n"
+
+                "2. Explica qué representa el P80 "
+                "en el producto obtenido.\n"
+
+                "3. Presenta la fórmula de razón "
+                "de reducción y sustituye los valores "
+                "entregados por la plataforma.\n"
+
+                "4. Explica el procedimiento matemático "
+                "hasta obtener el resultado.\n"
+
+                "5. Interpreta el significado físico "
+                "y metalúrgico de la razón obtenida.\n"
+
+                "6. Explica la clasificación orientativa "
+                "mostrada por la calculadora.\n"
+
+                "7. Indica las limitaciones del resultado "
+                "y qué información adicional se necesitaría "
+                "para evaluar el desempeño del equipo.\n\n"
+
+                "INSTRUCCIONES IMPORTANTES:\n"
+
+                "- Responde en español.\n"
+
+                "- Utiliza terminología metalúrgica clara.\n"
+
+                "- No inventes resultados experimentales.\n"
+
+                "- No inventes condiciones operacionales.\n"
+
+                "- No modifiques los valores entregados.\n"
+
+                "- No afirmes que la clasificación "
+                "orientativa corresponde a una norma.\n"
+
+                "- No deduzcas eficiencia energética "
+                "solamente a partir de la razón "
+                "de reducción.\n"
+
+                "- No determines un tipo específico "
+                "de chancador únicamente con Rr.\n"
+
+                "- Organiza la explicación de manera "
+                "comprensible para estudiantes "
+                "de ingeniería metalúrgica.\n"
+
+                "- Presenta las fórmulas y los resultados "
+                "con sus unidades correspondientes.\n"
+
+                "- Muestra todos los valores numéricos "
+                "y conversiones con exactamente "
+                "2 decimales, sin cifras adicionales.\n"
+
+                "- La razón de reducción es adimensional.\n"
+            )
+
+            # ------------------------------------------------
+            # GENERACIÓN DE LA RESPUESTA
+            # ------------------------------------------------
+
+            indicador_ia = st.empty()
+
+            try:
+
+                respuesta_ia, modelo_ia = generar_respuesta(
+                    api_key=api_key,
+                    mensajes=[],
+                    pregunta=pregunta_ia,
+                    indicador=indicador_ia
+                )
+
+                st.session_state[
+                    "rr_ia_respuesta"
+                ] = respuesta_ia
+
+                st.session_state[
+                    "rr_ia_modelo"
+                ] = modelo_ia
+
+            except Exception as error:
+
+                st.error(
+                    interpretar_error(error)
+                )
+
+                with st.expander(
+                    "Ver detalles del error de IA"
+                ):
+
+                    st.code(
+                        f"{type(error).__name__}: {error}"
+                    )
+
+            finally:
+
+                indicador_ia.empty()
+
+    # --------------------------------------------------------
+    # VISUALIZACIÓN DE LA EXPLICACIÓN GENERADA
+    # --------------------------------------------------------
+
+    if st.session_state.get("rr_ia_respuesta"):
+
+        st.markdown(
+            st.session_state["rr_ia_respuesta"]
+        )
+
+        st.caption(
+            "Explicación generada con "
+            f"{st.session_state.get('rr_ia_modelo', 'Gemini')}. "
+            "Verifica la interpretación antes de aplicarla "
+            "a decisiones operacionales."
+        )
