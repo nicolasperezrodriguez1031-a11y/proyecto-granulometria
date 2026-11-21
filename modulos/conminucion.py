@@ -1,4 +1,3 @@
-
 import io
 from html import escape
 
@@ -189,12 +188,13 @@ def convertir_unidad_rr():
 
 def mostrar_chancado():
 
-    st.title("🔨 Etapas de Chancado")
+    st.title("🔨 Fundamentos de Conminución")
 
     st.write(
-        "Módulo dedicado a las operaciones de reducción "
-        "de tamaño por fractura mecánica en la "
-        "conminución de minerales oxidados."
+        "El chancado es una operación mecánica que permite reducir "
+        "progresivamente el tamaño de las rocas y minerales mediante "
+        "fuerzas de compresión e impacto, con la finalidad de obtener "
+        "una granulometría adecuada para las operaciones posteriores."
     )
 
     st.markdown("---")
@@ -203,60 +203,73 @@ def mostrar_chancado():
         {
             "titulo": "1. Chancado Primario",
             "color": "#3b82f6",
-            "equipo": (
-                "Chancadores de mandíbulas o giratorios."
-            ),
+            "equipo": "Chancadores de mandíbulas y giratorios.",
             "alimentacion": (
-                "Roca corrida de mina (ROM), de gran tamaño."
+                "Mineral proveniente de la mina, con fragmentos "
+                "que pueden superar 1 m."
             ),
-            "producto": (
-                "Reducción inicial del mineral, frecuentemente "
-                "hacia tamaños del orden de 100 a 2000 mm."
-            )
+            "producto": "7–10 pulgadas, aproximadamente.",
+            "extra_titulo": "RAZÓN DE REDUCCIÓN",
+            "extra": "Mandíbulas: 3:1–5:1. Giratorios: 6:1–8:1.",
+            "detalle": (
+                "El chancador de mandíbulas utiliza una muela fija y "
+                "otra móvil que comprimen el mineral. El giratorio "
+                "emplea un cono que gira de forma excéntrica dentro "
+                "de una carcasa y se utiliza principalmente para "
+                "procesar grandes volúmenes de material."
+            ),
         },
         {
             "titulo": "2. Chancado Secundario",
             "color": "#f59e0b",
-            "equipo": (
-                "Chancadores de cono u otros equipos secundarios."
-            ),
+            "equipo": "Chancadores de cono.",
             "alimentacion": (
-                "Producto procedente del chancado primario."
+                "Producto del chancado primario: 7–10 pulgadas."
             ),
-            "producto": (
-                "Reducción adicional, con tamaños que pueden "
-                "encontrarse alrededor de 25 a 50 mm."
-            )
+            "producto": "2–4 pulgadas, aproximadamente.",
+            "extra_titulo": "CAPACIDAD DE PROCESAMIENTO",
+            "extra": "1.000–2.000 TPH, como referencia.",
+            "detalle": (
+                "Los chancadores de cono reducen el tamaño del mineral "
+                "por compresión entre un elemento móvil y una cavidad "
+                "fija. Esta etapa recibe material previamente "
+                "fragmentado y prepara el producto para las "
+                "operaciones posteriores."
+            ),
         },
         {
             "titulo": "3. Chancado Terciario",
             "color": "#10b981",
             "equipo": (
-                "Chancadores de cono de cabeza corta u otros "
-                "equipos de trituración fina."
+                "Chancadores de cono de alta reducción y "
+                "chancadores de impacto de eje vertical (VSI)."
             ),
             "alimentacion": (
-                "Producto del chancado secundario."
+                "Producto del chancado secundario: 2–4 pulgadas."
             ),
-            "producto": (
-                "Obtención de granulometrías más finas, "
-                "según los requerimientos de aglomeración "
-                "y lixiviación."
-            )
-        }
+            "producto": "3/8–1/4 de pulgada, aproximadamente.",
+            "extra_titulo": "CAPACIDAD DE PROCESAMIENTO",
+            "extra": "500–1.500 TPH, como referencia.",
+            "detalle": (
+                "El chancado terciario busca obtener una granulometría "
+                "más fina y controlada. Se emplean chancadores de cono "
+                "de alta reducción o equipos VSI, de acuerdo con "
+                "las necesidades del proceso posterior."
+            ),
+        },
     ]
 
     columnas = st.columns(3)
 
     for columna, etapa in zip(columnas, etapas):
-
         with columna:
-
             color = etapa["color"]
             titulo = escape(etapa["titulo"])
             equipo = escape(etapa["equipo"])
             alimentacion = escape(etapa["alimentacion"])
             producto = escape(etapa["producto"])
+            extra_titulo = escape(etapa["extra_titulo"])
+            extra = escape(etapa["extra"])
 
             tarjeta = (
                 f'<div style="'
@@ -265,52 +278,44 @@ def mostrar_chancado():
                 f'border-top:4px solid {color};'
                 f'border-radius:14px;'
                 f'padding:22px;'
-                f'min-height:325px;'
+                f'min-height:410px;'
                 f'box-sizing:border-box;'
                 f'color:#f8fafc;">'
-
                 f'<div style="font-size:1.3rem;'
-                f'font-weight:750;margin-bottom:20px;">'
-                f'{titulo}</div>'
-
-                f'<div style="font-size:.72rem;'
-                f'color:#94a3b8;font-weight:700;'
-                f'letter-spacing:.7px;margin-bottom:5px;">'
-                f'EQUIPOS PRINCIPALES</div>'
-
+                f'font-weight:750;margin-bottom:20px;">{titulo}</div>'
+                f'<div style="font-size:.72rem;color:#94a3b8;'
+                f'font-weight:700;letter-spacing:.7px;'
+                f'margin-bottom:5px;">EQUIPOS PRINCIPALES</div>'
                 f'<div style="font-size:.92rem;'
                 f'margin-bottom:17px;">{equipo}</div>'
-
                 f'<div style="border-top:1px solid #354052;'
                 f'margin-bottom:16px;"></div>'
-
-                f'<div style="font-size:.72rem;'
-                f'color:#94a3b8;font-weight:700;'
-                f'letter-spacing:.7px;margin-bottom:5px;">'
-                f'ALIMENTACIÓN</div>'
-
+                f'<div style="font-size:.72rem;color:#94a3b8;'
+                f'font-weight:700;letter-spacing:.7px;'
+                f'margin-bottom:5px;">ALIMENTACIÓN</div>'
                 f'<div style="font-size:.92rem;'
                 f'margin-bottom:17px;">{alimentacion}</div>'
-
-                f'<div style="font-size:.72rem;'
-                f'color:#94a3b8;font-weight:700;'
-                f'letter-spacing:.7px;margin-bottom:5px;">'
-                f'PRODUCTO</div>'
-
-                f'<div style="font-size:.92rem;">'
-                f'{producto}</div>'
+                f'<div style="font-size:.72rem;color:#94a3b8;'
+                f'font-weight:700;letter-spacing:.7px;'
+                f'margin-bottom:5px;">PRODUCTO</div>'
+                f'<div style="font-size:.92rem;'
+                f'margin-bottom:17px;">{producto}</div>'
+                f'<div style="font-size:.72rem;color:#94a3b8;'
+                f'font-weight:700;letter-spacing:.7px;'
+                f'margin-bottom:5px;">{extra_titulo}</div>'
+                f'<div style="font-size:.92rem;">{extra}</div>'
                 f'</div>'
             )
 
-            st.markdown(
-                tarjeta,
-                unsafe_allow_html=True
-            )
+            st.markdown(tarjeta, unsafe_allow_html=True)
+
+            with st.expander(f"Funcionamiento: {etapa['titulo']}"):
+                st.write(etapa["detalle"])
 
     st.caption(
-        "Los tamaños indicados son referenciales. "
-        "Los valores reales dependen del equipo, "
-        "la configuración del circuito y las "
+        "Los tamaños, las razones de reducción y las capacidades "
+        "indicados son referenciales. Los valores reales dependen "
+        "del equipo, la configuración del circuito y las "
         "características del mineral."
     )
 
@@ -839,58 +844,29 @@ def mostrar_granulometria():
                 )
             )
 
+            # El formato de cuatro secciones lo define el prompt central
+            # INSTRUCCIONES_CALCULADORAS en modulos/asistente.py.
             pregunta_ia = (
-                "Eres un asistente especializado en ingeniería "
-                "metalúrgica, conminución y análisis granulométrico "
-                "de minerales. Interpreta únicamente los resultados "
-                "reales que entrega esta calculadora. "
-                "Responde en español.\n\n"
-
+                "CALCULADORA: Análisis Granulométrico.\n"
+                "Interpreta únicamente los resultados entregados.\n\n"
                 f"Masa total de mineral: {masa_total:.2f} g\n"
-
                 f"T80 estimado: {detalle_t80}\n\n"
-
                 "TABLA DE RESULTADOS:\n"
-
                 f"{tabla_ia.to_string(index=False)}\n\n"
-
-                "Explica: (1) qué mide el análisis granulométrico; "
-
-                "(2) cómo se obtienen la masa retenida, "
-                "el retenido parcial, el retenido acumulado "
-                "y el pasante acumulado; "
-
-                "(3) qué indican los datos acerca de la "
-                "distribución de tamaños; "
-
-                "(4) cómo se interpreta la curva de porcentaje "
-                "pasante en función de la abertura; "
-
-                "(5) el significado del T80 y su estimación "
-                "por interpolación logarítmica en ambos ejes, "
-                "si está disponible; "
-
-                "(6) las limitaciones de la interpretación "
-                "y su utilidad para el proceso de conminución.\n\n"
-
-                "Para calcular el T80 se utilizan los porcentajes "
-                "pasantes redondeados a dos decimales, tal como "
-                "aparecen en la tabla. La interpolación aplica "
-                "logaritmos tanto al tamaño de abertura como "
-                "al porcentaje pasante.\n\n"
-
-                "INSTRUCCIONES: No inventes datos ni conclusiones "
-                "experimentales que no estén respaldadas por la tabla. "
-
-                "No confundas el retenido con el pasante. "
-
-                "No calcules un T80 ficticio si no está disponible. "
-
-                "Muestra los valores numéricos con exactamente "
-                "dos decimales y las unidades correspondientes. "
-
-                "Explica de manera clara para estudiantes "
-                "de metalurgia."
+                "CONTEXTO TÉCNICO ESPECÍFICO:\n"
+                "Explica brevemente la masa retenida, el retenido parcial, "
+                "el retenido acumulado y el pasante acumulado; interpreta "
+                "la distribución de tamaños y la curva granulométrica. "
+                "Si existe T80, explica su significado y la interpolación "
+                "logarítmica en ambos ejes. Para esta interpolación se usan "
+                "los porcentajes pasantes redondeados a dos decimales, "
+                "tal como aparecen en la tabla. Si el T80 no está "
+                "disponible, no lo estimes ni inventes. No confundas "
+                "porcentaje retenido con porcentaje pasante. "
+                "Indica las limitaciones de los datos y su utilidad "
+                "para la conminución. No inventes resultados de laboratorio. "
+                "Mantén exclusivamente las cuatro secciones "
+                "establecidas por las instrucciones de la calculadora."
             )
 
             indicador_ia = st.empty()
@@ -1149,10 +1125,10 @@ def mostrar_razon_reduccion():
     # --------------------------------------------------------
 
     if "rr_f80_input" not in st.session_state:
-        st.session_state["rr_f80_input"] = 150000.0
+        st.session_state["rr_f80_input"] = 0.0
 
     if "rr_p80_input" not in st.session_state:
-        st.session_state["rr_p80_input"] = 15000.0
+        st.session_state["rr_p80_input"] = 0.0
 
     if "rr_unidad" not in st.session_state:
         st.session_state["rr_unidad"] = "µm"
@@ -1204,7 +1180,7 @@ def mostrar_razon_reduccion():
 
     f80 = c1.number_input(
         f"Tamaño de Alimentación (F80) [{unidad}]",
-        min_value=0.01,
+        min_value=0.0,
         step=100.0 if unidad == "µm" else 0.1,
         format="%.2f",
         key="rr_f80_input"
@@ -1212,7 +1188,7 @@ def mostrar_razon_reduccion():
 
     p80 = c2.number_input(
         f"Tamaño de Producto (P80) [{unidad}]",
-        min_value=0.01,
+        min_value=0.0,
         step=10.0 if unidad == "µm" else 0.1,
         format="%.2f",
         key="rr_p80_input"
@@ -1223,6 +1199,25 @@ def mostrar_razon_reduccion():
     # --------------------------------------------------------
 
     st.markdown("### 2. Resultado y Diagnóstico")
+
+    if f80 == 0 or p80 == 0:
+
+        st.markdown(
+            tarjeta_resultado(
+                "Razón de Reducción (Rr)",
+                "0.00",
+                "Adimensional",
+                "#a855f7"
+            ),
+            unsafe_allow_html=True
+        )
+
+        st.info(
+            "Ingresa F80 y P80 mayores que cero "
+            "para calcular la razón de reducción."
+        )
+
+        return
 
     if f80 <= p80:
 
@@ -1373,88 +1368,32 @@ def mostrar_razon_reduccion():
             # PREPARACIÓN DE LA CONSULTA
             # ------------------------------------------------
 
+            # El formato de cuatro secciones lo define el prompt central
+            # INSTRUCCIONES_CALCULADORAS en modulos/asistente.py.
             pregunta_ia = (
-                "Eres un asistente especializado en "
-                "ingeniería metalúrgica y conminución "
-                "de minerales oxidados de cobre.\n\n"
-
-                "Tu función es explicar exclusivamente "
-                "el siguiente cálculo REAL efectuado "
-                "por la calculadora de Razón de Reducción "
-                "de una plataforma metalúrgica.\n\n"
-
+                "CALCULADORA: Razón de Reducción (Rr).\n"
+                "Interpreta exclusivamente este cálculo efectuado "
+                "por la plataforma.\n\n"
                 "DATOS DEL CÁLCULO:\n"
-
                 f"F80 = {f80:.2f} {unidad}\n"
-
                 f"P80 = {p80:.2f} {unidad}\n"
-
                 "Fórmula utilizada: Rr = F80 / P80\n"
-
-                f"Razón de reducción calculada: "
-                f"{razon_reduccion:.2f}\n"
-
+                f"Razón de reducción calculada: {razon_reduccion:.2f} "
+                "(adimensional)\n"
                 f"Clasificación orientativa: {etapa}\n\n"
-
-                "EXPLICA LOS SIGUIENTES ASPECTOS:\n\n"
-
-                "1. Explica qué representa el F80 "
-                "en la alimentación del proceso.\n"
-
-                "2. Explica qué representa el P80 "
-                "en el producto obtenido.\n"
-
-                "3. Presenta la fórmula de razón "
-                "de reducción y sustituye los valores "
-                "entregados por la plataforma.\n"
-
-                "4. Explica el procedimiento matemático "
-                "hasta obtener el resultado.\n"
-
-                "5. Interpreta el significado físico "
-                "y metalúrgico de la razón obtenida.\n"
-
-                "6. Explica la clasificación orientativa "
-                "mostrada por la calculadora.\n"
-
-                "7. Indica las limitaciones del resultado "
-                "y qué información adicional se necesitaría "
-                "para evaluar el desempeño del equipo.\n\n"
-
-                "INSTRUCCIONES IMPORTANTES:\n"
-
-                "- Responde en español.\n"
-
-                "- Utiliza terminología metalúrgica clara.\n"
-
-                "- No inventes resultados experimentales.\n"
-
-                "- No inventes condiciones operacionales.\n"
-
-                "- No modifiques los valores entregados.\n"
-
-                "- No afirmes que la clasificación "
-                "orientativa corresponde a una norma.\n"
-
-                "- No deduzcas eficiencia energética "
-                "solamente a partir de la razón "
-                "de reducción.\n"
-
-                "- No determines un tipo específico "
-                "de chancador únicamente con Rr.\n"
-
-                "- Organiza la explicación de manera "
-                "comprensible para estudiantes "
-                "de ingeniería metalúrgica.\n"
-
-                "- Presenta las fórmulas y los resultados "
-                "con sus unidades correspondientes.\n"
-
-                "- Muestra todos los valores numéricos "
-                "y conversiones con exactamente "
-                "2 decimales, sin cifras adicionales.\n"
-
-                "- La razón de reducción es adimensional.\n"
+                "CONTEXTO TÉCNICO ESPECÍFICO:\n"
+                "Explica qué representan F80 y P80 y la relación "
+                "Rr = F80/P80; interpreta el significado físico "
+                "y metalúrgico del valor obtenido. Explica que la "
+                "clasificación es orientativa, no normativa. "
+                "No infieras eficiencia energética ni selecciones "
+                "un chancador específico solamente a partir de Rr. "
+                "Identifica las limitaciones y los datos adicionales "
+                "que serían necesarios para evaluar el equipo. "
+                "No inventes condiciones operacionales ni cambies "
+                "los resultados calculados. Mantén exclusivamente "
+                "las cuatro secciones establecidas por las "
+                "instrucciones de la calculadora."
             )
 
             # ------------------------------------------------

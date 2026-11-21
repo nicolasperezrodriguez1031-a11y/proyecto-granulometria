@@ -238,9 +238,6 @@ def mostrar_potenciales_reduccion():
         for elemento in POTENCIALES
     ]
 
-    indice_cobre = nombres_pares.index("Cu²⁺/Cu")
-    indice_zinc = nombres_pares.index("Zn²⁺/Zn")
-
     columna_catodo, columna_anodo = st.columns(2)
 
     # --------------------------------------------------------
@@ -252,7 +249,8 @@ def mostrar_potenciales_reduccion():
         par_catodo = st.selectbox(
             "Par redox del cátodo (reducción)",
             options=nombres_pares,
-            index=indice_cobre,
+            index=None,
+            placeholder="Selecciona el par redox del cátodo",
             key="potencial_par_catodo"
         )
 
@@ -265,7 +263,8 @@ def mostrar_potenciales_reduccion():
         par_anodo = st.selectbox(
             "Par redox del ánodo (oxidación)",
             options=nombres_pares,
-            index=indice_zinc,
+            index=None,
+            placeholder="Selecciona el par redox del ánodo",
             key="potencial_par_anodo"
         )
 
@@ -273,13 +272,27 @@ def mostrar_potenciales_reduccion():
     # CÁLCULO DE POTENCIALES
     # --------------------------------------------------------
 
-    potencial_catodo = obtener_potencial(par_catodo)
+    # Los resultados permanecen en 0,00 V
+    # mientras no se seleccionen ambos pares redox.
 
-    potencial_anodo = obtener_potencial(par_anodo)
-
-    diferencia_potencial = (
-        potencial_catodo - potencial_anodo
+    calculo_completo = (
+        par_catodo is not None
+        and par_anodo is not None
     )
+
+    potencial_catodo = 0.0
+    potencial_anodo = 0.0
+    diferencia_potencial = 0.0
+
+    if calculo_completo:
+
+        potencial_catodo = obtener_potencial(par_catodo)
+
+        potencial_anodo = obtener_potencial(par_anodo)
+
+        diferencia_potencial = (
+            potencial_catodo - potencial_anodo
+        )
 
     # --------------------------------------------------------
     # RESULTADOS
@@ -287,27 +300,57 @@ def mostrar_potenciales_reduccion():
 
     st.markdown("### 📊 Resultados del Cálculo")
 
+    st.write(
+        "Se muestran el potencial estándar de reducción "
+        "del cátodo, el potencial estándar del ánodo "
+        "expresado como reducción y el potencial "
+        "estándar resultante de la celda."
+    )
+
     r1, r2, r3 = st.columns(3)
 
     with r1:
 
         st.metric(
             "E° del cátodo",
-            f"{formatear_potencial(potencial_catodo)} V"
+            (
+                f"{formatear_potencial(potencial_catodo)} V"
+                if calculo_completo
+                else "0,00 V"
+            )
         )
 
     with r2:
 
         st.metric(
             "E° del ánodo (como reducción)",
-            f"{formatear_potencial(potencial_anodo)} V"
+            (
+                f"{formatear_potencial(potencial_anodo)} V"
+                if calculo_completo
+                else "0,00 V"
+            )
         )
 
     with r3:
 
         st.metric(
             "E° de celda",
-            f"{formatear_potencial(diferencia_potencial)} V"
+            (
+                f"{formatear_potencial(diferencia_potencial)} V"
+                if calculo_completo
+                else "0,00 V"
+            )
+        )
+
+    if not calculo_completo:
+
+        st.info(
+            "Selecciona el par redox del cátodo y "
+            "el par redox del ánodo para obtener "
+            "los potenciales estándar y calcular "
+            "el potencial de celda. "
+            "Los valores 0,00 V son iniciales "
+            "y no representan un cálculo realizado."
         )
 
     # --------------------------------------------------------
@@ -327,7 +370,16 @@ def mostrar_potenciales_reduccion():
 
     st.markdown("### Interpretación del Resultado")
 
-    if par_catodo == par_anodo:
+    if not calculo_completo:
+
+        st.info(
+            "La interpretación estará disponible "
+            "cuando se seleccionen ambos pares redox "
+            "y se calcule el potencial estándar "
+            "de la celda."
+        )
+
+    elif par_catodo == par_anodo:
 
         st.info(
             "Seleccionaste el mismo par redox "
@@ -370,3 +422,96 @@ def mostrar_potenciales_reduccion():
         "la semirreacción anódica ocurre "
         "en sentido de oxidación."
     )
+
+    # ========================================================
+    # 3. EXPLICACIÓN DEL RESULTADO CON IA
+    # ========================================================
+
+    st.markdown("---")
+    st.header("3. 🤖 Explicación del resultado con IA")
+    st.write(
+        "Solicita al asistente metalúrgico una interpretación "
+        "del potencial estándar de celda calculado."
+    )
+
+    if st.button(
+        "🤖 Explicar resultado con IA",
+        key="potenciales_explicar_resultado_ia",
+        use_container_width=True,
+        disabled=not calculo_completo
+    ):
+        from modulos.asistente import (
+            obtener_api_key,
+            generar_respuesta,
+            interpretar_error
+        )
+
+        api_key = obtener_api_key()
+
+        if not api_key:
+            st.error("No se encontró la clave API de Gemini.")
+            st.info(
+                "Configura GEMINI_API_KEY en "
+                ".streamlit/secrets.toml para activar la explicación."
+            )
+        else:
+            pregunta_ia = (
+                "Organiza obligatoriamente la respuesta en cuatro apartados, "
+                "en este orden: 1. Resultados; 2. Explicación metalúrgica; "
+                "3. Análisis técnico; 4. Recomendaciones. "
+                "No añadas apartados adicionales ni inventes mediciones. "
+                "Respeta las cifras calculadas y las unidades originales. "
+                "Distingue claramente las hipótesis de los datos medidos.\n\n"
+                "Eres un asistente especializado en electroquímica "
+                "y electroobtención. Explica los resultados de la "
+                "calculadora de potenciales estándar de reducción "
+                "en español, sin inventar datos. Usa dos decimales "
+                "en los valores numéricos.\n\n"
+                f"Par redox del cátodo: {par_catodo}\n"
+                f"Potencial estándar de reducción del cátodo: "
+                f"{potencial_catodo:.2f} V\n"
+                f"Par redox del ánodo: {par_anodo}\n"
+                f"Potencial estándar de reducción del ánodo: "
+                f"{potencial_anodo:.2f} V\n"
+                f"Potencial estándar de celda: "
+                f"{diferencia_potencial:.2f} V\n\n"
+                "Explica por qué E°celda = E°cátodo - E°ánodo "
+                "cuando ambos valores se expresan como potenciales "
+                "de reducción. Interpreta el signo del resultado "
+                "y su relación con la espontaneidad en condiciones "
+                "estándar. Distingue los potenciales estándar de "
+                "las condiciones reales de operación y no inventes "
+                "concentraciones, voltajes aplicados ni eficiencias. "
+                "No confundas potencial estándar de celda con voltaje "
+                "operacional de electroobtención."
+            )
+
+            indicador_ia = st.empty()
+            try:
+                respuesta_ia, modelo_ia = generar_respuesta(
+                    api_key=api_key,
+                    mensajes=[],
+                    pregunta=pregunta_ia,
+                    indicador=indicador_ia
+                )
+                st.session_state["potenciales_ia_respuesta"] = respuesta_ia
+                st.session_state["potenciales_ia_modelo"] = modelo_ia
+            except Exception as error:
+                st.error(interpretar_error(error))
+                with st.expander("Ver detalles del error de IA"):
+                    st.code(str(error))
+
+    if not calculo_completo:
+        st.info(
+            "Selecciona los pares redox del cátodo y del ánodo "
+            "para habilitar la explicación con IA."
+        )
+    elif st.session_state.get("potenciales_ia_respuesta"):
+        st.markdown("### 🤖 Interpretación del asistente")
+        st.markdown(st.session_state["potenciales_ia_respuesta"])
+        if st.session_state.get("potenciales_ia_modelo"):
+            st.caption(
+                f"Modelo utilizado: "
+                f"{st.session_state['potenciales_ia_modelo']}"
+            )
+

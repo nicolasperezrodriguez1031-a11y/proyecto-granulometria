@@ -1,6 +1,27 @@
 
 import streamlit as st
+import pandas as pd
 from html import escape
+
+def _excel_desde_tabla(tabla, nombre_hoja):
+    """Genera el Excel en memoria para descargar desde Streamlit."""
+    from io import BytesIO
+    salida = BytesIO()
+    with pd.ExcelWriter(salida, engine="openpyxl") as escritor:
+        tabla.to_excel(escritor, sheet_name=nombre_hoja, index=False)
+        hoja = escritor.sheets[nombre_hoja]
+        from openpyxl.styles import Font, PatternFill, Alignment
+        for celda in hoja[1]:
+            celda.font = Font(bold=True, color="FFFFFF")
+            celda.fill = PatternFill("solid", fgColor="17365D")
+            celda.alignment = Alignment(wrap_text=True)
+        for columna in hoja.columns:
+            letra = columna[0].column_letter
+            largo = max(len(str(c.value or "")) for c in columna)
+            hoja.column_dimensions[letra].width = min(max(largo + 3, 14), 65)
+        hoja.freeze_panes = "A2"
+    return salida.getvalue()
+
 
 
 # ============================================================
@@ -145,19 +166,37 @@ def calcular_preparacion_electrolito(
     # MASA DE SOLUCIÓN COMERCIAL
     # --------------------------------------------------------
 
-    masa_solucion_acido_g = (
-        masa_acido_puro_g
-        / (pureza_acido / 100.0)
-    )
+    # Evita división por cero cuando la pureza
+    # todavía no ha sido ingresada.
+
+    if pureza_acido > 0:
+
+        masa_solucion_acido_g = (
+            masa_acido_puro_g
+            / (pureza_acido / 100.0)
+        )
+
+    else:
+
+        masa_solucion_acido_g = 0.0
 
     # --------------------------------------------------------
     # VOLUMEN DE ÁCIDO COMERCIAL
     # --------------------------------------------------------
 
-    volumen_acido_ml = (
-        masa_solucion_acido_g
-        / densidad_acido
-    )
+    # Evita división por cero cuando la densidad
+    # todavía no ha sido ingresada.
+
+    if densidad_acido > 0:
+
+        volumen_acido_ml = (
+            masa_solucion_acido_g
+            / densidad_acido
+        )
+
+    else:
+
+        volumen_acido_ml = 0.0
 
     return {
         "masa_cobre_g": masa_cobre_g,
@@ -219,10 +258,10 @@ def mostrar_preparacion_electrolito():
 
             volumen_ingresado = st.number_input(
                 "Volumen final del electrolito [L]",
-                min_value=0.001,
-                value=1.0,
+                min_value=0.0,
+                value=0.0,
                 step=0.5,
-                format="%.3f",
+                format="%.2f",
                 key="prep_ew_volumen_l"
             )
 
@@ -232,8 +271,8 @@ def mostrar_preparacion_electrolito():
 
             volumen_ingresado = st.number_input(
                 "Volumen final del electrolito [mL]",
-                min_value=1.0,
-                value=1000.0,
+                min_value=0.0,
+                value=0.0,
                 step=100.0,
                 format="%.2f",
                 key="prep_ew_volumen_ml"
@@ -252,7 +291,7 @@ def mostrar_preparacion_electrolito():
         concentracion_cobre = st.number_input(
             "Concentración objetivo de Cu²⁺ [g/L]",
             min_value=0.0,
-            value=50.0,
+            value=0.0,
             step=1.0,
             format="%.2f",
             key="prep_ew_cobre"
@@ -263,7 +302,7 @@ def mostrar_preparacion_electrolito():
         concentracion_acido = st.number_input(
             "Concentración objetivo de H₂SO₄ [g/L]",
             min_value=0.0,
-            value=170.0,
+            value=0.0,
             step=5.0,
             format="%.2f",
             key="prep_ew_acido"
@@ -279,9 +318,9 @@ def mostrar_preparacion_electrolito():
 
         pureza_acido = st.number_input(
             "Pureza del H₂SO₄ comercial [%]",
-            min_value=0.01,
+            min_value=0.0,
             max_value=100.0,
-            value=97.0,
+            value=0.0,
             step=0.5,
             format="%.2f",
             key="prep_ew_pureza_acido"
@@ -291,8 +330,8 @@ def mostrar_preparacion_electrolito():
 
         densidad_acido = st.number_input(
             "Densidad del H₂SO₄ comercial [g/mL]",
-            min_value=0.01,
-            value=1.84,
+            min_value=0.0,
+            value=0.0,
             step=0.01,
             format="%.2f",
             key="prep_ew_densidad_acido"
@@ -398,7 +437,7 @@ def mostrar_preparacion_electrolito():
 
     st.header("3. Resumen de Reactivos")
 
-    st.table(
+    tabla_reactivos = pd.DataFrame(
         {
             "Reactivo": [
                 "Sulfato de cobre pentahidratado",
@@ -413,6 +452,15 @@ def mostrar_preparacion_electrolito():
                 )
             ]
         }
+    )
+    st.table(tabla_reactivos)
+    st.download_button(
+        "📥 Exportar resumen de reactivos a Excel",
+        data=_excel_desde_tabla(tabla_reactivos, "Reactivos EW"),
+        file_name="preparacion_electrolito_reactivos.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="prep_ew_exportar_excel",
+        use_container_width=True,
     )
 
     st.markdown("#### Condiciones de Preparación")
@@ -470,3 +518,118 @@ def mostrar_preparacion_electrolito():
         "de volumen ni cambios de densidad de la "
         "mezcla final."
     )
+
+    # ========================================================
+    # 4. EXPLICACIÓN DEL RESULTADO CON IA
+    # ========================================================
+
+    st.markdown("---")
+    st.header("4. 🤖 Explicación del resultado con IA")
+    st.write(
+        "Solicita al asistente metalúrgico una explicación "
+        "de las cantidades calculadas para preparar el electrolito rico."
+    )
+
+    datos_ia_validos = (
+        volumen_l > 0
+        and (concentracion_cobre > 0 or concentracion_acido > 0)
+        and (
+            concentracion_acido == 0
+            or (pureza_acido > 0 and densidad_acido > 0)
+        )
+    )
+
+    if st.button(
+        "🤖 Explicar resultado con IA",
+        key="prep_ew_explicar_resultado_ia",
+        use_container_width=True,
+        disabled=not datos_ia_validos
+    ):
+        from modulos.asistente import (
+            obtener_api_key,
+            generar_respuesta,
+            interpretar_error
+        )
+
+        api_key = obtener_api_key()
+
+        if not api_key:
+            st.error("No se encontró la clave API de Gemini.")
+            st.info(
+                "Configura GEMINI_API_KEY en "
+                ".streamlit/secrets.toml para activar la explicación."
+            )
+        else:
+            pregunta_ia = (
+                "Organiza obligatoriamente la respuesta en cuatro apartados, "
+                "en este orden: 1. Resultados; 2. Explicación metalúrgica; "
+                "3. Análisis técnico; 4. Recomendaciones. "
+                "Añade solo la quinta sección de seguridad indicada abajo. "
+                "No inventes mediciones. "
+                "Respeta las cifras calculadas y las unidades originales. "
+                "Distingue claramente las hipótesis de los datos medidos.\n\n"
+                "Eres un asistente especializado en hidrometalurgia "
+                "y preparación de electrolitos para electroobtención. "
+                "Explica en español los resultados de esta calculadora, "
+                "sin inventar datos y mostrando los valores con dos decimales.\n\n"
+                f"Volumen final objetivo: {volumen_ingresado:.2f} {unidad_volumen}\n"
+                f"Volumen equivalente para cálculo: {volumen_l:.8f} L\n"
+                f"Concentración objetivo de Cu²⁺: {concentracion_cobre:.2f} g/L\n"
+                f"Concentración objetivo de H₂SO₄: {concentracion_acido:.2f} g/L\n"
+                f"Pureza del ácido comercial: {pureza_acido:.2f} %\n"
+                f"Densidad del ácido comercial: {densidad_acido:.2f} g/mL\n"
+                f"Masa de cobre objetivo: {resultados['masa_cobre_g']:.2f} g\n"
+                f"Masa de CuSO₄·5H₂O requerida: {resultados['masa_sulfato_g']:.2f} g\n"
+                f"Masa de H₂SO₄ puro: {resultados['masa_acido_puro_g']:.2f} g\n"
+                f"Masa de solución ácida comercial: "
+                f"{resultados['masa_solucion_acido_g']:.2f} g\n"
+                f"Volumen de ácido comercial: "
+                f"{resultados['volumen_acido_ml']:.2f} mL\n\n"
+                "Explica el significado de las concentraciones objetivo, "
+                "el uso de CuSO₄·5H₂O y cómo influyen la pureza y "
+                "densidad del H₂SO₄ en las cantidades requeridas. "
+                "Aclara que se trata de preparación a partir de reactivos "
+                "y no de enriquecimiento industrial por SX; el sulfato "
+                "de cobre se considera puro. No inventes condiciones "
+                "experimentales ni supongas que la suma de volúmenes "
+                "equivale al volumen final. Incluye una advertencia "
+                "al final una quinta sección titulada "
+                "'5. Advertencias de seguridad para la preparación'. "
+                "Indica que el H₂SO₄ es corrosivo, que la dilución "
+                "desprende calor, que se agrega lentamente ácido al agua "
+                "y nunca agua al ácido, con protección personal y "
+                "siguiendo los procedimientos del laboratorio. "
+                "No supongas que el volumen inicial de agua es igual "
+                "al volumen final de electrolito."
+            )
+
+            indicador_ia = st.empty()
+            try:
+                respuesta_ia, modelo_ia = generar_respuesta(
+                    api_key=api_key,
+                    mensajes=[],
+                    pregunta=pregunta_ia,
+                    indicador=indicador_ia
+                )
+                st.session_state["prep_ew_ia_respuesta"] = respuesta_ia
+                st.session_state["prep_ew_ia_modelo"] = modelo_ia
+            except Exception as error:
+                st.error(interpretar_error(error))
+                with st.expander("Ver detalles del error de IA"):
+                    st.code(str(error))
+
+    if not datos_ia_validos:
+        st.info(
+            "Ingresa un volumen final mayor que cero y al menos una "
+            "concentración objetivo positiva. Si utilizas H₂SO₄, "
+            "ingresa también su pureza y densidad para habilitar la IA."
+        )
+    elif st.session_state.get("prep_ew_ia_respuesta"):
+        st.markdown("### 🤖 Interpretación del asistente")
+        st.markdown(st.session_state["prep_ew_ia_respuesta"])
+        if st.session_state.get("prep_ew_ia_modelo"):
+            st.caption(
+                f"Modelo utilizado: "
+                f"{st.session_state['prep_ew_ia_modelo']}"
+            )
+

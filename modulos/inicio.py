@@ -197,11 +197,13 @@ def mostrar_inicio():
 
     st.write(
         "Los minerales oxidados son especies mineralógicas "
-        "que contienen metales asociados principalmente "
-        "a oxígeno u otros grupos químicos, como carbonatos, "
-        "hidróxidos y sulfatos. En el caso del cobre, "
-        "muchas de estas especies pueden procesarse "
-        "mediante métodos hidrometalúrgicos."
+        "que contienen oxígeno como componente principal de su "
+        "composición química. Se encuentran generalmente en las "
+        "zonas superficiales de los yacimientos y se originan "
+        "mediante procesos de oxidación y alteración de los minerales. "
+        "En el caso del cobre, estos minerales suelen presentar "
+        "tonalidades verdes o azules, dependiendo de su composición "
+        "mineralógica."
     )
 
     st.markdown("---")
@@ -224,29 +226,36 @@ def mostrar_inicio():
         ),
         (
             "2. CONMINUCIÓN (CHANCADO)",
-            "Reducción progresiva del tamaño de roca "
-            "mediante etapas de chancado, preparando "
-            "el mineral para las operaciones posteriores."
+            "El chancado es una operación mecánica que permite reducir "
+            "progresivamente el tamaño de las rocas y minerales mediante "
+            "fuerzas de compresión e impacto, con la finalidad de obtener "
+            "una granulometría adecuada para las operaciones posteriores."
         ),
         (
             "3. AGLOMERACIÓN",
-            "Mezcla del mineral con agua y, cuando "
-            "corresponde, ácido sulfúrico para formar "
-            "aglomerados y favorecer la permeabilidad "
-            "del lecho mineral."
+            "La aglomeración es un proceso previo a la lixiviación que consiste "
+            "en unir partículas finas y gruesas mediante la incorporación "
+            "controlada de humedad y, cuando corresponde, reactivos químicos, "
+            "formando aglomerados que favorecen la permeabilidad del lecho "
+            "mineral y la circulación de la solución lixiviante."
         ),
         (
             "4. LIXIVIACIÓN",
-            "Disolución de los metales valiosos "
-            "contenidos en el mineral mediante "
-            "soluciones acuosas, generalmente ácidas "
-            "para minerales oxidados de cobre."
+            "La lixiviación es un proceso hidrometalúrgico de extracción "
+            "sólido-líquido que consiste en disolver selectivamente el cobre "
+            "presente en el mineral mediante una solución lixiviante, "
+            "generalmente de ácido sulfúrico, permitiendo su transferencia "
+            "hacia una fase acuosa denominada solución rica de lixiviación "
+            "(PLS), para su posterior recuperación."
         ),
         (
             "5. EXTRACCIÓN POR SOLVENTES",
-            "Purificación y concentración del cobre "
-            "contenido en la solución rica (PLS) "
-            "mediante una fase orgánica extractante."
+            "La extracción por solventes es un proceso hidrometalúrgico "
+            "posterior a la lixiviación que permite concentrar y purificar "
+            "el cobre presente en la solución rica (PLS), mediante su "
+            "transferencia selectiva hacia una fase orgánica y su posterior "
+            "reextracción hacia una solución acuosa, obteniendo un electrolito "
+            "rico destinado a la electroobtención."
         ),
         (
             "6. ELECTROOBTENCIÓN",

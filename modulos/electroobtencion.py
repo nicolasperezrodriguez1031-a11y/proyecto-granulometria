@@ -2,6 +2,27 @@
 import streamlit as st
 import pandas as pd
 from html import escape
+from decimal import Decimal, ROUND_HALF_UP
+
+def _excel_desde_tabla(tabla, nombre_hoja):
+    """Genera el Excel en memoria para descargar desde Streamlit."""
+    from io import BytesIO
+    salida = BytesIO()
+    with pd.ExcelWriter(salida, engine="openpyxl") as escritor:
+        tabla.to_excel(escritor, sheet_name=nombre_hoja, index=False)
+        hoja = escritor.sheets[nombre_hoja]
+        from openpyxl.styles import Font, PatternFill, Alignment
+        for celda in hoja[1]:
+            celda.font = Font(bold=True, color="FFFFFF")
+            celda.fill = PatternFill("solid", fgColor="17365D")
+            celda.alignment = Alignment(wrap_text=True)
+        for columna in hoja.columns:
+            letra = columna[0].column_letter
+            largo = max(len(str(c.value or "")) for c in columna)
+            hoja.column_dimensions[letra].width = min(max(largo + 3, 14), 65)
+        hoja.freeze_panes = "A2"
+    return salida.getvalue()
+
 
 
 # ============================================================
@@ -93,14 +114,31 @@ def formatear_numero(valor, decimales=2):
     Presenta los números con punto de miles y coma decimal.
 
     Por defecto se muestran dos decimales.
-    Los cálculos conservan su precisión interna.
     """
+
     numero = f"{float(valor):,.{decimales}f}"
 
     return (
         numero.replace(",", "TEMP")
         .replace(".", ",")
         .replace("TEMP", ".")
+    )
+
+
+def redondear_dos_decimales(valor):
+    """
+    Redondea una masa a dos decimales para su utilización
+    en el cálculo de eficiencia de corriente.
+
+    Se utiliza ROUND_HALF_UP para establecer un criterio
+    explícito de redondeo decimal.
+    """
+
+    return float(
+        Decimal(str(valor)).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP
+        )
     )
 
 
@@ -233,16 +271,34 @@ def calcular_eficiencia_corriente(
     Eficiencia de corriente experimental:
 
     eficiencia = (m_real / m_F) * 100
+
+    Las dos masas se redondean a dos decimales
+    ANTES de realizar la división.
+
+    Ejemplo:
+    m_real = 0.88 g
+    m_F = 0.99 g
+
+    eficiencia = (0.88 / 0.99) * 100
+    eficiencia = 88.89 %
     """
 
-    if masa_teorica_g <= 0:
+    if masa_real_g is None or masa_teorica_g is None:
         return None
 
-    return (
-        masa_real_g
-        / masa_teorica_g
+    masa_real_2d = redondear_dos_decimales(masa_real_g)
+    masa_teorica_2d = redondear_dos_decimales(masa_teorica_g)
+
+    if masa_teorica_2d <= 0:
+        return None
+
+    eficiencia = (
+        masa_real_2d
+        / masa_teorica_2d
         * 100.0
     )
+
+    return redondear_dos_decimales(eficiencia)
 
 
 def calcular_deposito_laboratorio(
@@ -253,7 +309,8 @@ def calcular_deposito_laboratorio(
     electrones=2,
     intensidad_manual=None,
     masa_inicial_g=None,
-    masa_final_g=None
+    masa_final_g=None,
+    masa_lamina_g=None
 ):
     """
     Calcula los resultados de un ensayo de laboratorio.
@@ -263,6 +320,7 @@ def calcular_deposito_laboratorio(
     - Utilizar una intensidad manual.
     - Determinar la masa teórica por Faraday.
     - Calcular la masa real experimental.
+    - Utilizar la masa de una lámina depositada.
     - Calcular la eficiencia experimental.
     """
 
@@ -288,7 +346,10 @@ def calcular_deposito_laboratorio(
     masa_real_g = None
     eficiencia_experimental = None
 
-    if (
+    if masa_lamina_g is not None:
+        masa_real_g = masa_lamina_g
+
+    elif (
         masa_inicial_g is not None
         and masa_final_g is not None
     ):
@@ -297,6 +358,7 @@ def calcular_deposito_laboratorio(
             masa_final_g
         )
 
+    if masa_real_g is not None:
         eficiencia_experimental = calcular_eficiencia_corriente(
             masa_real_g,
             masa_teorica_g
@@ -313,6 +375,7 @@ def calcular_deposito_laboratorio(
         "masa_teorica_g": masa_teorica_g,
         "masa_inicial_g": masa_inicial_g,
         "masa_final_g": masa_final_g,
+        "masa_lamina_g": masa_lamina_g,
         "masa_real_g": masa_real_g,
         "eficiencia_corriente": eficiencia_experimental,
     }
@@ -449,10 +512,13 @@ def mostrar_calculadora_ew():
 
     with col1:
 
+        # CORRECCIÓN:
+        # La densidad de corriente comienza en 0,00.
+
         densidad_corriente = st.number_input(
             "Densidad de corriente (j) [A/m²]",
             min_value=0.0,
-            value=250.0,
+            value=0.0,
             step=10.0,
             format="%.2f",
             key="ew_lab_densidad_corriente"
@@ -469,10 +535,13 @@ def mostrar_calculadora_ew():
 
         if unidad_area == "m²":
 
+            # CORRECCIÓN:
+            # El área en m² comienza en 0,00.
+
             area_ingresada = st.number_input(
                 "Área catódica (A) [m²]",
                 min_value=0.0,
-                value=0.01,
+                value=0.0,
                 step=0.01,
                 format="%.2f",
                 key="ew_lab_area_m2"
@@ -482,10 +551,13 @@ def mostrar_calculadora_ew():
 
         else:
 
+            # CORRECCIÓN:
+            # El área en cm² comienza en 0,00.
+
             area_ingresada = st.number_input(
                 "Área catódica (A) [cm²]",
                 min_value=0.0,
-                value=100.0,
+                value=0.0,
                 step=10.0,
                 format="%.2f",
                 key="ew_lab_area_cm2"
@@ -562,7 +634,7 @@ def mostrar_calculadora_ew():
 
     st.latex(metal["reaccion"])
 
-    info1, info2 = st.columns(2)
+    info1, info2, info3 = st.columns(3)
 
     with info1:
 
@@ -576,6 +648,13 @@ def mostrar_calculadora_ew():
         st.metric(
             "Electrones transferidos",
             str(electrones)
+        )
+
+    with info3:
+
+        st.metric(
+            "Constante de Faraday",
+            f"{formatear_numero(CONSTANTE_FARADAY)} C/mol e⁻"
         )
 
     st.caption(
@@ -732,16 +811,57 @@ def mostrar_calculadora_ew():
     st.write(
         "La masa real corresponde a la cantidad "
         "de metal obtenida experimentalmente. "
-        "Se determina mediante la diferencia "
+        "Puede determinarse mediante la diferencia "
         "entre la masa final y la masa inicial "
-        "del cátodo."
+        "del cátodo, o mediante la medición directa "
+        "de la masa de la lámina metálica obtenida."
     )
 
-    st.latex(
-        r"m_{\mathrm{real}} = m_f - m_i"
+    # --------------------------------------------------------
+    # MÉTODO PARA DETERMINAR LA MASA REAL
+    # --------------------------------------------------------
+
+    st.markdown("### ⚖️ Método de Medición")
+
+    metodo_masa_real = st.radio(
+        "Selecciona cómo se determinó la masa real",
+        options=[
+            "Diferencia entre masa final e inicial del cátodo",
+            "Masa directa de la lámina depositada"
+        ],
+        index=0,
+        key="ew_lab_metodo_masa_real"
     )
 
-    st.markdown("### ⚖️ Mediciones del Cátodo")
+    if metodo_masa_real == (
+        "Diferencia entre masa final e inicial del cátodo"
+    ):
+
+        st.latex(
+            r"m_{\mathrm{real}} = m_f - m_i"
+        )
+
+        st.write(
+            "Se utiliza la diferencia entre la masa "
+            "final y la masa inicial del cátodo."
+        )
+
+        origen_masa_real = "Diferencia de masas del cátodo"
+
+    else:
+
+        st.latex(
+            r"m_{\mathrm{real}} = m_{\mathrm{lámina}}"
+        )
+
+        st.write(
+            "Se utiliza directamente la masa de la "
+            "lámina metálica obtenida durante el ensayo."
+        )
+
+        origen_masa_real = "Medición directa de la lámina"
+
+    st.markdown("### ⚖️ Mediciones Experimentales")
 
     unidad_masa = st.selectbox(
         "Unidad de medida de las masas",
@@ -750,77 +870,127 @@ def mostrar_calculadora_ew():
         key="ew_lab_unidad_masa"
     )
 
-    masa_col1, masa_col2 = st.columns(2)
+    factor_masa = 1000.0 if unidad_masa == "kg" else 1.0
 
-    with masa_col1:
+    masa_inicial = None
+    masa_final = None
+    masa_lamina = None
 
-        masa_inicial = st.number_input(
-            f"Masa inicial del cátodo [{unidad_masa}]",
-            min_value=0.0,
-            value=0.0,
-            step=0.01,
-            format="%.2f",
-            key=f"ew_lab_masa_inicial_{unidad_masa}"
-        )
+    masa_inicial_g = None
+    masa_final_g = None
+    masa_lamina_g = None
 
-    with masa_col2:
-
-        masa_final = st.number_input(
-            f"Masa final del cátodo [{unidad_masa}]",
-            min_value=0.0,
-            value=0.0,
-            step=0.01,
-            format="%.2f",
-            key=f"ew_lab_masa_final_{unidad_masa}"
-        )
+    masa_real = None
+    mediciones_validas = False
 
     # --------------------------------------------------------
-    # CONVERSIÓN A GRAMOS
+    # MÉTODO A: DIFERENCIA DE MASAS DEL CÁTODO
     # --------------------------------------------------------
 
-    if unidad_masa == "kg":
+    if metodo_masa_real == (
+        "Diferencia entre masa final e inicial del cátodo"
+    ):
 
-        masa_inicial_g = masa_inicial * 1000.0
-        masa_final_g = masa_final * 1000.0
+        masa_col1, masa_col2 = st.columns(2)
+
+        with masa_col1:
+
+            masa_inicial = st.number_input(
+                f"Masa inicial del cátodo [{unidad_masa}]",
+                min_value=0.0,
+                value=0.0,
+                step=0.01,
+                format="%.2f",
+                key=f"ew_lab_masa_inicial_{unidad_masa}"
+            )
+
+        with masa_col2:
+
+            masa_final = st.number_input(
+                f"Masa final del cátodo [{unidad_masa}]",
+                min_value=0.0,
+                value=0.0,
+                step=0.01,
+                format="%.2f",
+                key=f"ew_lab_masa_final_{unidad_masa}"
+            )
+
+        masa_inicial_g = masa_inicial * factor_masa
+        masa_final_g = masa_final * factor_masa
+
+        masas_ingresadas = (
+            masa_inicial > 0
+            or masa_final > 0
+        )
+
+        mediciones_validas = (
+            masas_ingresadas
+            and masa_final_g >= masa_inicial_g
+        )
+
+        if (
+            masas_ingresadas
+            and masa_final_g < masa_inicial_g
+        ):
+
+            st.error(
+                "La masa final es menor que la masa inicial. "
+                "Revisa los datos del ensayo. "
+                "Para calcular una masa depositada positiva, "
+                "la masa final debe ser igual o superior "
+                "a la masa inicial."
+            )
+
+        if mediciones_validas:
+
+            masa_real = calcular_masa_real(
+                masa_inicial_g,
+                masa_final_g
+            )
+
+        elif not masas_ingresadas:
+
+            st.info(
+                "Ingresa la masa inicial y la masa final "
+                "del cátodo para calcular la masa real."
+            )
+
+    # --------------------------------------------------------
+    # MÉTODO B: MASA DIRECTA DE LA LÁMINA
+    # --------------------------------------------------------
 
     else:
 
-        masa_inicial_g = masa_inicial
-        masa_final_g = masa_final
-
-    # --------------------------------------------------------
-    # VALIDACIÓN DE LAS MEDICIONES
-    # --------------------------------------------------------
-
-    masas_ingresadas = (
-        masa_inicial > 0
-        or masa_final > 0
-    )
-
-    mediciones_validas = (
-        masas_ingresadas
-        and masa_final_g >= masa_inicial_g
-    )
-
-    if (
-        masas_ingresadas
-        and masa_final_g < masa_inicial_g
-    ):
-
-        st.error(
-            "La masa final es menor que la masa inicial. "
-            "Revisa los datos del ensayo. "
-            "Para calcular una masa depositada positiva, "
-            "la masa final debe ser igual o superior "
-            "a la masa inicial."
+        masa_lamina = st.number_input(
+            f"Masa de la lámina depositada [{unidad_masa}]",
+            min_value=0.0,
+            value=0.0,
+            step=0.01,
+            format="%.2f",
+            key=f"ew_lab_masa_lamina_{unidad_masa}"
         )
+
+        masa_lamina_g = masa_lamina * factor_masa
+
+        mediciones_validas = masa_lamina > 0
+
+        if mediciones_validas:
+
+            masa_real = masa_lamina_g
+
+        else:
+
+            st.info(
+                "Ingresa la masa de la lámina metálica "
+                "obtenida experimentalmente para "
+                "determinar la masa real depositada."
+            )
+
+    # --------------------------------------------------------
+    # RESULTADO DE MASA REAL
+    # --------------------------------------------------------
 
     if mediciones_validas:
-
-        masa_real = calcular_masa_real(
-            masa_inicial_g,
-            masa_final_g
-        )
 
         st.markdown("### 📊 Resultado de Masa Real")
 
@@ -830,24 +1000,10 @@ def mostrar_calculadora_ew():
                 valor=formatear_numero(masa_real),
                 unidad="gramos (g)",
                 color="#38bdf8",
-                descripcion=(
-                    "Diferencia entre la masa final "
-                    "y la masa inicial del cátodo"
-                )
+                descripcion=origen_masa_real
             ),
             unsafe_allow_html=True
         )
-
-    else:
-
-        masa_real = None
-
-        if not masas_ingresadas:
-
-            st.info(
-                "Ingresa la masa inicial y la masa final "
-                "del cátodo para calcular la masa real."
-            )
 
     st.markdown("---")
 
@@ -870,76 +1026,224 @@ def mostrar_calculadora_ew():
         r"\times 100"
     )
 
-    eficiencia_experimental = None
+    # --------------------------------------------------------
+    # SELECCIÓN DEL ORIGEN DE LAS MASAS
+    # --------------------------------------------------------
 
-    if masa_real is not None:
+    st.markdown("### 📥 Selección de Datos para la Eficiencia")
 
-        eficiencia_experimental = calcular_eficiencia_corriente(
-            masa_real_g=masa_real,
-            masa_teorica_g=masa_teorica
+    st.write(
+        "Puedes utilizar los resultados calculados "
+        "en los puntos anteriores o ingresar otros "
+        "valores de masa teórica y masa real."
+    )
+
+    eficiencia_col1, eficiencia_col2 = st.columns(2)
+
+    with eficiencia_col1:
+
+        modo_masa_teorica = st.radio(
+            "Masa teórica a utilizar",
+            options=[
+                "Utilizar masa teórica calculada en el punto 2",
+                "Ingresar otra masa teórica"
+            ],
+            index=0,
+            key="ew_lab_modo_masa_teorica_eficiencia"
         )
 
-        if eficiencia_experimental is None:
+    with eficiencia_col2:
 
-            st.warning(
-                "No es posible calcular la eficiencia "
-                "porque la masa teórica es igual a cero. "
-                "Revisa la intensidad y el tiempo "
-                "de electrólisis."
+        modo_masa_real = st.radio(
+            "Masa real a utilizar",
+            options=[
+                "Utilizar masa real calculada en el punto 3",
+                "Ingresar otra masa real"
+            ],
+            index=0,
+            key="ew_lab_modo_masa_real_eficiencia"
+        )
+
+    # --------------------------------------------------------
+    # MASA TEÓRICA PARA EFICIENCIA
+    # --------------------------------------------------------
+
+    if modo_masa_teorica == (
+        "Utilizar masa teórica calculada en el punto 2"
+    ):
+
+        masa_teorica_eficiencia = masa_teorica
+
+        origen_masa_teorica_eficiencia = (
+            "Calculada en el punto 2"
+        )
+
+        st.info(
+            "Masa teórica seleccionada: "
+            f"{formatear_numero(masa_teorica_eficiencia)} g."
+        )
+
+    else:
+
+        masa_teorica_eficiencia = st.number_input(
+            "Masa teórica para eficiencia [g]",
+            min_value=0.0,
+            value=0.0,
+            step=0.01,
+            format="%.2f",
+            key="ew_lab_masa_teorica_manual_eficiencia"
+        )
+
+        origen_masa_teorica_eficiencia = (
+            "Ingresada manualmente"
+        )
+
+    # --------------------------------------------------------
+    # MASA REAL PARA EFICIENCIA
+    # --------------------------------------------------------
+
+    if modo_masa_real == (
+        "Utilizar masa real calculada en el punto 3"
+    ):
+
+        masa_real_eficiencia = masa_real
+
+        origen_masa_real_eficiencia = (
+            "Calculada en el punto 3"
+        )
+
+        if masa_real_eficiencia is not None:
+
+            st.info(
+                "Masa real seleccionada: "
+                f"{formatear_numero(masa_real_eficiencia)} g."
             )
 
         else:
 
-            st.markdown(
-                tarjeta_resultado(
-                    titulo="⚡ Eficiencia de Corriente Calculada",
-                    valor=formatear_numero(
-                        eficiencia_experimental
-                    ),
-                    unidad="porcentaje (%)",
-                    color="#fbbf24",
-                    descripcion=(
-                        "Relación entre la masa real "
-                        "y la masa teórica de Faraday"
-                    )
-                ),
-                unsafe_allow_html=True
+            st.info(
+                "Todavía no hay una masa real disponible "
+                "en el punto 3. Ingresa las mediciones "
+                "correspondientes o selecciona la opción "
+                "de ingresar otra masa real."
             )
-
-            if eficiencia_experimental > 100.0:
-
-                st.warning(
-                    "La eficiencia calculada supera "
-                    "el 100 %. Esto puede indicar "
-                    "humedad en el depósito, impurezas, "
-                    "errores de pesaje o diferencias "
-                    "entre la corriente registrada "
-                    "y la corriente real del ensayo."
-                )
-
-            elif eficiencia_experimental == 0.0:
-
-                st.info(
-                    "La masa real registrada es cero. "
-                    "Por lo tanto, la eficiencia "
-                    "experimental también es cero."
-                )
-
-            else:
-
-                st.success(
-                    "La eficiencia experimental "
-                    "se calculó correctamente "
-                    "a partir de las masas medidas."
-                )
 
     else:
 
-        st.info(
-            "Para obtener la eficiencia experimental, "
-            "primero debes ingresar las masas "
-            "inicial y final del cátodo."
+        masa_real_eficiencia = st.number_input(
+            "Masa real para eficiencia [g]",
+            min_value=0.0,
+            value=0.0,
+            step=0.01,
+            format="%.2f",
+            key="ew_lab_masa_real_manual_eficiencia"
         )
+
+        origen_masa_real_eficiencia = (
+            "Ingresada manualmente"
+        )
+
+    # --------------------------------------------------------
+    # CÁLCULO DE EFICIENCIA
+    # --------------------------------------------------------
+
+    eficiencia_experimental = None
+
+    # Se redondean las masas a dos decimales antes
+    # de realizar el cálculo de eficiencia.
+
+    masa_teorica_eficiencia_2d = (
+        redondear_dos_decimales(masa_teorica_eficiencia)
+        if masa_teorica_eficiencia is not None
+        else None
+    )
+
+    masa_real_eficiencia_2d = (
+        redondear_dos_decimales(masa_real_eficiencia)
+        if masa_real_eficiencia is not None
+        else None
+    )
+
+    datos_eficiencia_validos = (
+        masa_teorica_eficiencia_2d is not None
+        and masa_teorica_eficiencia_2d > 0
+        and masa_real_eficiencia_2d is not None
+    )
+
+    if datos_eficiencia_validos:
+
+        eficiencia_experimental = calcular_eficiencia_corriente(
+            masa_real_g=masa_real_eficiencia_2d,
+            masa_teorica_g=masa_teorica_eficiencia_2d
+        )
+
+        st.markdown("### 📊 Resultado de Eficiencia")
+
+        st.markdown(
+            tarjeta_resultado(
+                titulo="⚡ Eficiencia de Corriente Calculada",
+                valor=formatear_numero(
+                    eficiencia_experimental
+                ),
+                unidad="porcentaje (%)",
+                color="#fbbf24",
+                descripcion=(
+                    "Relación entre la masa real "
+                    "y la masa teórica seleccionadas"
+                )
+            ),
+            unsafe_allow_html=True
+        )
+
+        if eficiencia_experimental > 100.0:
+
+            st.warning(
+                "La eficiencia calculada supera "
+                "el 100 %. Esto puede indicar "
+                "humedad en el depósito, impurezas, "
+                "errores de pesaje o diferencias "
+                "entre la corriente registrada "
+                "y la corriente real del ensayo."
+            )
+
+        elif eficiencia_experimental == 0.0:
+
+            st.info(
+                "La masa real registrada es cero. "
+                "Por lo tanto, la eficiencia "
+                "experimental también es cero."
+            )
+
+        else:
+
+            st.success(
+                "La eficiencia experimental "
+                "se calculó correctamente "
+                "a partir de las masas seleccionadas."
+            )
+
+    else:
+
+        if (
+            masa_teorica_eficiencia_2d is None
+            or masa_teorica_eficiencia_2d <= 0
+        ):
+
+            st.warning(
+                "Para calcular la eficiencia debes "
+                "disponer de una masa teórica "
+                "mayor que cero después de redondearla "
+                "a dos decimales."
+            )
+
+        if masa_real_eficiencia_2d is None:
+
+            st.info(
+                "Para obtener la eficiencia experimental, "
+                "primero debes ingresar una masa real "
+                "en el punto 3 o seleccionar la opción "
+                "de ingresar otra masa real."
+            )
 
     st.markdown("---")
 
@@ -1061,33 +1365,101 @@ def mostrar_calculadora_ew():
             "Unidad": "—"
         },
         {
+            "Parámetro": "Constante de Faraday",
+            "Valor": formatear_numero(CONSTANTE_FARADAY),
+            "Unidad": "C/mol e⁻"
+        },
+        {
             "Parámetro": "Masa teórica depositada",
             "Valor": formatear_numero(masa_teorica),
             "Unidad": "g"
         },
         {
-            "Parámetro": "Masa inicial del cátodo",
+            "Parámetro": "Método de medición de masa real",
+            "Valor": origen_masa_real,
+            "Unidad": "—"
+        },
+    ]
+
+    # --------------------------------------------------------
+    # FILAS SEGÚN EL MÉTODO DE MASA REAL
+    # --------------------------------------------------------
+
+    if metodo_masa_real == (
+        "Diferencia entre masa final e inicial del cátodo"
+    ):
+
+        datos_tabla.extend([
+            {
+                "Parámetro": "Masa inicial del cátodo",
+                "Valor": (
+                    formatear_numero(masa_inicial)
+                    if mediciones_validas
+                    else "Pendiente"
+                ),
+                "Unidad": unidad_masa
+            },
+            {
+                "Parámetro": "Masa final del cátodo",
+                "Valor": (
+                    formatear_numero(masa_final)
+                    if mediciones_validas
+                    else "Pendiente"
+                ),
+                "Unidad": unidad_masa
+            },
+        ])
+
+    else:
+
+        datos_tabla.append({
+            "Parámetro": "Masa de la lámina depositada",
             "Valor": (
-                formatear_numero(masa_inicial)
-                if masas_ingresadas
+                formatear_numero(masa_lamina)
+                if mediciones_validas
                 else "Pendiente"
             ),
             "Unidad": unidad_masa
-        },
-        {
-            "Parámetro": "Masa final del cátodo",
-            "Valor": (
-                formatear_numero(masa_final)
-                if masas_ingresadas
-                else "Pendiente"
-            ),
-            "Unidad": unidad_masa
-        },
+        })
+
+    # --------------------------------------------------------
+    # RESULTADOS FINALES DE MASA Y EFICIENCIA
+    # --------------------------------------------------------
+
+    datos_tabla.extend([
         {
             "Parámetro": "Masa real depositada",
             "Valor": (
                 formatear_numero(masa_real)
                 if masa_real is not None
+                else "Pendiente"
+            ),
+            "Unidad": "g"
+        },
+        {
+            "Parámetro": "Origen masa teórica para eficiencia",
+            "Valor": origen_masa_teorica_eficiencia,
+            "Unidad": "—"
+        },
+        {
+            "Parámetro": "Masa teórica utilizada en eficiencia",
+            "Valor": (
+                formatear_numero(masa_teorica_eficiencia_2d)
+                if masa_teorica_eficiencia_2d is not None
+                else "Pendiente"
+            ),
+            "Unidad": "g"
+        },
+        {
+            "Parámetro": "Origen masa real para eficiencia",
+            "Valor": origen_masa_real_eficiencia,
+            "Unidad": "—"
+        },
+        {
+            "Parámetro": "Masa real utilizada en eficiencia",
+            "Valor": (
+                formatear_numero(masa_real_eficiencia_2d)
+                if masa_real_eficiencia_2d is not None
                 else "Pendiente"
             ),
             "Unidad": "g"
@@ -1101,7 +1473,7 @@ def mostrar_calculadora_ew():
             ),
             "Unidad": "%"
         }
-    ]
+    ])
 
     tabla_resultados = pd.DataFrame(datos_tabla)
 
@@ -1125,21 +1497,131 @@ def mostrar_calculadora_ew():
         }
     )
 
+    st.download_button(
+        "📥 Exportar resultados de electrodeposición a Excel",
+        data=_excel_desde_tabla(tabla_resultados, "Electrodeposición"),
+        file_name="resultados_electrodeposicion.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="ew_exportar_excel",
+        use_container_width=True,
+    )
+
     st.info(
         "La masa teórica se obtiene mediante "
-        "la Ley de Faraday. La masa real se determina "
-        "mediante las mediciones del cátodo y la "
-        "eficiencia experimental se calcula "
-        "automáticamente. No se utiliza una "
-        "eficiencia de corriente supuesta."
+        "la Ley de Faraday. La masa real puede "
+        "determinarse mediante la diferencia "
+        "de masas del cátodo o mediante la "
+        "medición directa de la lámina depositada. "
+        "Para calcular la eficiencia experimental "
+        "pueden utilizarse los resultados anteriores "
+        "o valores ingresados manualmente. "
+        "No se utiliza una eficiencia de corriente supuesta."
     )
 
     st.caption(
         "Los resultados corresponden a un ensayo "
         "de laboratorio. Se supone una intensidad "
-        "de corriente constante y que el cambio "
-        "de masa del cátodo corresponde al metal "
+        "de corriente constante y que la masa "
+        "registrada corresponde al metal "
         "seleccionado. Las mediciones deben "
-        "realizarse sobre un cátodo adecuadamente "
-        "lavado y seco."
+        "realizarse sobre un cátodo o una lámina "
+        "adecuadamente lavados y secos."
     )
+
+
+    # ========================================================
+    # 6. EXPLICACIÓN DEL RESULTADO CON IA
+    # ========================================================
+
+    st.markdown("---")
+    st.header("6. 🤖 Explicación del resultado con IA")
+    st.write(
+        "Solicita al asistente metalúrgico una interpretación "
+        "de los resultados de electrodeposición calculados."
+    )
+
+    if st.button(
+        "🤖 Explicar resultado con IA",
+        key="ew_lab_explicar_resultado_ia",
+        use_container_width=True
+    ):
+        from modulos.asistente import (
+            obtener_api_key,
+            generar_respuesta,
+            interpretar_error
+        )
+
+        api_key = obtener_api_key()
+
+        if not api_key:
+            st.error("No se encontró la clave API de Gemini.")
+            st.info(
+                "Configura GEMINI_API_KEY en "
+                ".streamlit/secrets.toml para activar la explicación."
+            )
+        else:
+            pregunta_ia = (
+                "Organiza obligatoriamente la respuesta en cuatro apartados, "
+                "en este orden: 1. Resultados; 2. Explicación metalúrgica; "
+                "3. Análisis técnico; 4. Recomendaciones. "
+                "No añadas apartados adicionales ni inventes mediciones. "
+                "Respeta las cifras calculadas y las unidades originales. "
+                "Distingue claramente las hipótesis de los datos medidos.\n\n"
+                "Eres un asistente especializado en electroobtención "
+                "y electrodeposición de metales. Explica exclusivamente "
+                "los resultados reales de este ensayo, en español, "
+                "sin inventar datos ni modificar las cifras. "
+                "Usa dos decimales para los resultados numéricos.\n\n"
+                f"Metal: {metal_seleccionado}\n"
+                f"Densidad de corriente: {densidad_corriente:.2f} A/m²\n"
+                f"Área catódica ingresada: {area_ingresada:.2f} {unidad_area}\n"
+                f"Área equivalente para cálculo: {area_m2:.8f} m²\n"
+                f"Intensidad calculada: {intensidad_calculada:.2f} A\n"
+                f"Intensidad usada: {intensidad_utilizada:.2f} A "
+                f"({origen_corriente})\n"
+                f"Tiempo ingresado: {tiempo_experimental:.2f} {unidad_tiempo}\n"
+                f"Tiempo equivalente para cálculo: {tiempo_segundos:.2f} s\n"
+                f"Masa molar: {masa_molar:.2f} g/mol\n"
+                f"Electrones transferidos: {electrones}\n"
+                f"Constante de Faraday: {CONSTANTE_FARADAY:.2f} C/mol\n"
+                f"Masa teórica: {masa_teorica:.2f} g\n"
+                f"Método de masa real: {origen_masa_real}\n"
+                f"Masa real: "
+                f"{f'{masa_real:.2f} g' if masa_real is not None else 'No disponible'}\n"
+                f"Masa teórica para eficiencia: "
+                f"{masa_teorica_eficiencia_2d:.2f} g\n"
+                f"Masa real para eficiencia: "
+                f"{f'{masa_real_eficiencia_2d:.2f} g' if masa_real_eficiencia_2d is not None else 'No disponible'}\n"
+                f"Eficiencia experimental: "
+                f"{f'{eficiencia_experimental:.2f} %' if eficiencia_experimental is not None else 'No calculada'}\n\n"
+                "Explica I = j·A, la ley de Faraday, la diferencia "
+                "entre masa teórica y masa real y, si existe, "
+                "la eficiencia experimental. Señala las limitaciones "
+                "del ensayo sin asumir datos no proporcionados. "
+                "No calcules consumo energético. No interpretes una eficiencia "
+                "no calculada como cero ni atribuyas causas a las pérdidas "
+                "sin mediciones que lo sustenten."
+            )
+
+            indicador_ia = st.empty()
+            try:
+                respuesta_ia, modelo_ia = generar_respuesta(
+                    api_key=api_key,
+                    mensajes=[],
+                    pregunta=pregunta_ia,
+                    indicador=indicador_ia
+                )
+                st.session_state["ew_lab_ia_respuesta"] = respuesta_ia
+                st.session_state["ew_lab_ia_modelo"] = modelo_ia
+            except Exception as error:
+                st.error(interpretar_error(error))
+                with st.expander("Ver detalles del error de IA"):
+                    st.code(str(error))
+
+    if st.session_state.get("ew_lab_ia_respuesta"):
+        st.markdown("### 🤖 Interpretación del asistente")
+        st.markdown(st.session_state["ew_lab_ia_respuesta"])
+        if st.session_state.get("ew_lab_ia_modelo"):
+            st.caption(
+                f"Modelo utilizado: {st.session_state['ew_lab_ia_modelo']}"
+            )
