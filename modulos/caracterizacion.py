@@ -14,17 +14,17 @@ MINERALES = [
         "formula": "Cu₂CO₃(OH)₂",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 57.5,
-        "densidad": "3.75 - 4.00 g/cm³",
-        "dureza": "3.5 - 4.0",
-        "acido": "Alto (carbonatos)",
-        "solubilidad": "Soluble en ácidos diluidos",
+        "ley": 57.48,
+        "densidad": "3,6 - 4,0 g/cm³",
+        "dureza": "3,5 - 4,0",
+        "acido": "887 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#22c55e",
         "composicion": {
-            "Cobre (Cu)": "57.5%",
-            "Oxígeno (O)": "37.1%",
-            "Carbono (C)": "5.4%",
-            "Hidrógeno (H)": "0.9%"
+            "Hidrógeno (H)": "0,91%",
+            "Oxígeno (O)": "36,18%",
+            "Carbono (C)": "5,43%",
+            "Cobre (Cu)": "57,48%"
         }
     },
     {
@@ -32,35 +32,37 @@ MINERALES = [
         "formula": "Cu₃(CO₃)₂(OH)₂",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 55.3,
-        "densidad": "3.77 - 3.83 g/cm³",
-        "dureza": "3.5 - 4.0",
-        "acido": "Alto (carbonatos)",
-        "solubilidad": "Soluble en ácidos diluidos",
+        "ley": 55.31,
+        "densidad": "3,8 - 3,9 g/cm³",
+        "dureza": "3,5 - 4,0",
+        "acido": "854 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#3b82f6",
         "composicion": {
-            "Cobre (Cu)": "55.3%",
-            "Oxígeno (O)": "37.1%",
-            "Carbono (C)": "7.0%",
-            "Hidrógeno (H)": "0.6%"
+            "Hidrógeno (H)": "0,58%",
+            "Oxígeno (O)": "37,14%",
+            "Cobre (Cu)": "55,31%",
+            "Carbono (C)": "6,97%"
         }
     },
     {
         "nombre": "Crisocola",
-        "formula": "Silicato hidratado de cobre",
+        "formula": "Cu₂₋ₓAlₓ(H₂₋ₓSi₂O₅)(OH)₄·nH₂O",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 36.0,
-        "densidad": "2.0 - 2.4 g/cm³",
-        "dureza": "2.0 - 4.0",
-        "acido": "Variable",
-        "solubilidad": "Comportamiento variable en medio ácido",
+        "ley": 24.17,
+        "densidad": "1,93 - 2,4 g/cm³",
+        "dureza": "2,5 - 3,5",
+        "acido": "496 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#06b6d4",
         "composicion": {
-            "Cobre (Cu)": "Variable; 36% referencial",
-            "Silicio (Si)": "Variable",
-            "Aluminio (Al)": "Variable",
-            "Agua y otros": "Variable"
+            "Hidrógeno (H)": "1,26%",
+            "Aluminio (Al)": "1,47%",
+            "Cobre (Cu)": "24,17%",
+            "Silicio (Si)": "24,42%",
+            "Agua (H₂O)": "3,91%",
+            "Oxígeno (O)": "48,69%"
         }
     },
     {
@@ -68,15 +70,15 @@ MINERALES = [
         "formula": "Cu₂O",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 88.8,
-        "densidad": "6.10 g/cm³",
-        "dureza": "3.5 - 4.0",
-        "acido": "Variable",
-        "solubilidad": "Depende del medio y condiciones redox",
+        "ley": 88.82,
+        "densidad": "6,14 - 6,15 g/cm³",
+        "dureza": "3,5 - 4,0",
+        "acido": "685 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#ef4444",
         "composicion": {
-            "Cobre (Cu)": "88.8%",
-            "Oxígeno (O)": "11.2%"
+            "Oxígeno (O)": "11,18%",
+            "Cobre (Cu)": "88,82%"
         }
     },
     {
@@ -84,15 +86,15 @@ MINERALES = [
         "formula": "CuO",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 79.9,
-        "densidad": "6.30 - 6.45 g/cm³",
-        "dureza": "3.0 - 4.0",
-        "acido": "Variable",
-        "solubilidad": "Soluble en ácidos diluidos",
+        "ley": 79.89,
+        "densidad": "6,5 g/cm³",
+        "dureza": "3,0 - 4,0",
+        "acido": "1233 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#94a3b8",
         "composicion": {
-            "Cobre (Cu)": "79.9%",
-            "Oxígeno (O)": "20.1%"
+            "Oxígeno (O)": "20,11%",
+            "Cobre (Cu)": "79,89%"
         }
     },
     {
@@ -100,17 +102,17 @@ MINERALES = [
         "formula": "Cu₂Cl(OH)₃",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 59.5,
-        "densidad": "3.75 - 3.77 g/cm³",
-        "dureza": "3.0 - 3.5",
-        "acido": "Variable",
-        "solubilidad": "Soluble en medios ácidos",
+        "ley": 59.51,
+        "densidad": "3,75 - 3,78 g/cm³",
+        "dureza": "3,0 - 3,5",
+        "acido": "689 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#16a34a",
         "composicion": {
-            "Cobre (Cu)": "59.5%",
-            "Cloro (Cl)": "16.6%",
-            "Oxígeno (O)": "22.4%",
-            "Hidrógeno (H)": "1.4%"
+            "Hidrógeno (H)": "1,42%",
+            "Cloro (Cl)": "16,60%",
+            "Oxígeno (O)": "22,47%",
+            "Cobre (Cu)": "59,51%"
         }
     },
     {
@@ -118,17 +120,17 @@ MINERALES = [
         "formula": "Cu₄SO₄(OH)₆",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 56.2,
-        "densidad": "3.90 g/cm³",
-        "dureza": "3.5 - 4.0",
-        "acido": "Variable",
-        "solubilidad": "Soluble en medios ácidos",
+        "ley": 56.20,
+        "densidad": "4,0 - 4,41 g/cm³",
+        "dureza": "3,5 - 4,0",
+        "acido": "651 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#10b981",
         "composicion": {
-            "Cobre (Cu)": "56.2%",
-            "Azufre (S)": "7.1%",
-            "Oxígeno (O)": "35.4%",
-            "Hidrógeno (H)": "1.3%"
+            "Hidrógeno (H)": "1,34%",
+            "Oxígeno (O)": "35,37%",
+            "Cobre (Cu)": "56,20%",
+            "Azufre (S)": "7,09%"
         }
     },
     {
@@ -136,33 +138,18 @@ MINERALES = [
         "formula": "CuSO₄·5H₂O",
         "grupo": "Cobre",
         "elemento": "Cu",
-        "ley": 25.5,
-        "densidad": "2.28 g/cm³",
-        "dureza": "2.5",
-        "acido": "No requiere ácido para disolverse",
-        "solubilidad": "Alta solubilidad en agua",
+        "ley": 25.45,
+        "densidad": "2,1 - 2,3 g/cm³",
+        "dureza": "2,5",
+        "acido": "0 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#0ea5e9",
         "composicion": {
-            "Cobre (Cu)": "25.5%",
-            "Azufre (S)": "12.8%",
-            "Oxígeno (O)": "57.7%",
-            "Hidrógeno (H)": "4.0%"
-        }
-    },
-    {
-        "nombre": "Óxido áurico",
-        "formula": "Au₂O₃",
-        "grupo": "Otros",
-        "elemento": "Au",
-        "ley": 89.1,
-        "densidad": "Variable",
-        "dureza": "No definida",
-        "acido": "No aplica directamente",
-        "solubilidad": "Compuesto poco estable; no es un mineral habitual",
-        "color": "#eab308",
-        "composicion": {
-            "Oro (Au)": "89.1%",
-            "Oxígeno (O)": "10.9%"
+            "Azufre (S)": "12,84%",
+            "Cobre (Cu)": "25,45%",
+            "Agua (H₂O)": "36,04%",
+            "Hidrógeno (H)": "4,04%",
+            "Oxígeno (O)": "57,67%"
         }
     },
     {
@@ -170,15 +157,16 @@ MINERALES = [
         "formula": "ZnO",
         "grupo": "Otros",
         "elemento": "Zn",
-        "ley": 80.3,
-        "densidad": "5.43 - 5.70 g/cm³",
-        "dureza": "4.0",
-        "acido": "Variable",
-        "solubilidad": "Soluble en ácidos diluidos",
+        "ley": 73.25,
+        "densidad": "5,4 - 5,7 g/cm³",
+        "dureza": "4,0 - 4,5",
+        "acido": "1205 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#a1a1aa",
         "composicion": {
-            "Zinc (Zn)": "80.3%",
-            "Oxígeno (O)": "19.7%"
+            "Oxígeno (O)": "19,91%",
+            "Manganeso (Mn)": "6,84%",
+            "Zinc (Zn)": "73,25%"
         }
     },
     {
@@ -186,15 +174,15 @@ MINERALES = [
         "formula": "Fe₂O₃",
         "grupo": "Otros",
         "elemento": "Fe",
-        "ley": 69.9,
-        "densidad": "5.26 g/cm³",
-        "dureza": "5.5 - 6.5",
-        "acido": "Variable",
-        "solubilidad": "Disolución lenta en ciertos medios ácidos",
+        "ley": 69.94,
+        "densidad": "5,2 - 5,3 g/cm³",
+        "dureza": "5,5 - 6,5",
+        "acido": "1843 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#c2410c",
         "composicion": {
-            "Hierro (Fe)": "69.9%",
-            "Oxígeno (O)": "30.1%"
+            "Oxígeno (O)": "30,06%",
+            "Hierro (Fe)": "69,94%"
         }
     },
     {
@@ -202,15 +190,15 @@ MINERALES = [
         "formula": "Fe₃O₄",
         "grupo": "Otros",
         "elemento": "Fe",
-        "ley": 72.4,
-        "densidad": "5.15 - 5.18 g/cm³",
-        "dureza": "5.5 - 6.5",
-        "acido": "Variable",
-        "solubilidad": "Insoluble en agua; disolución ácida dependiente del medio",
+        "ley": 72.36,
+        "densidad": "5,1 - 5,2 g/cm³",
+        "dureza": "5,5 - 6,5",
+        "acido": "1694 kg H₂SO₄/t",
+        "solubilidad": "",
         "color": "#64748b",
         "composicion": {
-            "Hierro (Fe)": "72.4%",
-            "Oxígeno (O)": "27.6%"
+            "Oxígeno (O)": "27,64%",
+            "Hierro (Fe)": "72,36%"
         }
     }
 ]
@@ -341,7 +329,19 @@ def generar_html_mineral(mineral):
     dureza = seguro(mineral["dureza"])
     acido = seguro(mineral["acido"])
     solubilidad = seguro(mineral["solubilidad"])
+    etiqueta_acido = (
+        "Consumo teórico de H₂SO₄"
+        if mineral["nombre"] in {"Malaquita", "Azurita", "Crisocola", "Cuprita", "Tenorita", "Atacamita", "Brochantita", "Calcantita", "Cincita", "Hematita", "Magnetita"}
+        else "Consumo ácido"
+    )
     color = mineral["color"]
+
+    detalle_solubilidad = (
+        f'<div class="mineral-detail">{solubilidad}</div>'
+        if solubilidad else ''
+    )
+
+    ley_formateada = f'{mineral["ley"]:.2f}%'
 
     # Se construye en una sola línea para impedir
     # que Markdown lo interprete como bloque de código.
@@ -353,7 +353,7 @@ def generar_html_mineral(mineral):
         f'</div>'
         f'<div class="mineral-formula">{formula}</div>'
         f'<div class="mineral-law-label">Ley teórica de {elemento}</div>'
-        f'<div class="mineral-law">{mineral["ley"]:.1f}%</div>'
+        f'<div class="mineral-law">{ley_formateada}</div>'
         f'<div class="mineral-divider"></div>'
         f'<div class="mineral-property">'
         f'<span class="mineral-property-label">Densidad</span>'
@@ -364,10 +364,10 @@ def generar_html_mineral(mineral):
         f'<span class="mineral-property-value">{dureza}</span>'
         f'</div>'
         f'<div class="mineral-property">'
-        f'<span class="mineral-property-label">Consumo ácido</span>'
+        f'<span class="mineral-property-label">{etiqueta_acido}</span>'
         f'<span class="mineral-property-value">{acido}</span>'
         f'</div>'
-        f'<div class="mineral-detail">{solubilidad}</div>'
+        f'{detalle_solubilidad}'
         f'</div>'
     )
 
@@ -467,10 +467,13 @@ def mostrar_minerales():
     )
 
     st.caption(
-        "La composición de la crisocola es variable. "
-        "Su ley de 36% se utiliza únicamente "
-        "como valor referencial. Los consumos "
-        "de ácido son cualitativos."
+        "Las composiciones indicadas para la cincita corresponden a los datos "
+        "de la tesis y no a la composición estequiométrica del ZnO puro. "
+        "La composición real de la crisocola puede variar; "
+        "el valor de 24,17% de Cu corresponde a la composición "
+        "idealizada indicada en la tesis. Los consumos de ácido "
+        "indicados para malaquita, azurita, crisocola y cuprita "
+        "son valores teóricos, no consumos operacionales medidos."
     )
 
 
@@ -594,7 +597,6 @@ def mostrar_estimador_ley():
 
     leyes_cabeza = {
         "Cu": 0.0,
-        "Au": 0.0,
         "Zn": 0.0,
         "Fe": 0.0
     }
@@ -635,7 +637,7 @@ def mostrar_estimador_ley():
 
     st.markdown("### 📊 Leyes de Cabeza Estimadas")
 
-    r1, r2, r3, r4 = st.columns(4)
+    r1, r2, r3 = st.columns(3)
 
     r1.metric(
         "Cobre (Cu)",
@@ -643,16 +645,11 @@ def mostrar_estimador_ley():
     )
 
     r2.metric(
-        "Oro (Au)",
-        f"{leyes_cabeza['Au']:.3f}%"
-    )
-
-    r3.metric(
         "Zinc (Zn)",
         f"{leyes_cabeza['Zn']:.3f}%"
     )
 
-    r4.metric(
+    r3.metric(
         "Hierro (Fe)",
         f"{leyes_cabeza['Fe']:.3f}%"
     )
