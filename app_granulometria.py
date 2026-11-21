@@ -73,12 +73,12 @@ PAGINAS = {
     # Para reactivarla, quitar el comentario de la línea siguiente.
     # "Estimador Ley de Cabeza": mostrar_estimador_ley,
 
-    "Chancado": mostrar_chancado,
+    "Fundamentos conminución": mostrar_chancado,
     "Análisis granulométrico": mostrar_granulometria,
     "Razón de Reducción": mostrar_razon_reduccion,
 
-    "Procesos Hidrometalúrgicos": mostrar_procesos_hidro,
-    "Calculadora de Aglomeración": mostrar_aglomeracion,
+    "Fundamentos de Aglomeración y Lixiviación": mostrar_procesos_hidro,
+    "Aglomeración y Curado de Laboratorio": mostrar_aglomeracion,
     "Preparación de Solución LX": mostrar_preparacion_lx,
 
     "Fundamentos SX": mostrar_fundamentos_sx,
@@ -170,8 +170,8 @@ with st.sidebar:
     ):
 
         boton_navegacion(
-            "🔨 Chancado",
-            "Chancado"
+            "🔨 Fundamentos conminución",
+            "Fundamentos conminución"
         )
 
         boton_navegacion(
@@ -192,13 +192,13 @@ with st.sidebar:
     ):
 
         boton_navegacion(
-            "💧 Procesos Hidrometalúrgicos",
-            "Procesos Hidrometalúrgicos"
+            "💧 Fundamentos de Aglomeración y Lixiviación",
+            "Fundamentos de Aglomeración y Lixiviación"
         )
 
         boton_navegacion(
-            "🧮 Calculadora de Aglomeración",
-            "Calculadora de Aglomeración"
+            "🧪 Aglomeración y Curado de Laboratorio",
+            "Aglomeración y Curado de Laboratorio"
         )
 
         boton_navegacion(
