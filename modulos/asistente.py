@@ -1,5 +1,6 @@
 
 import time
+import re
 import streamlit as st
 
 from google import genai
@@ -60,6 +61,16 @@ SEGURIDAD:
 - Para diluir ácido sulfúrico, indica añadir lentamente el ácido al agua,
   nunca agua al ácido, con protección y control del calentamiento.
 
+FORMATO DE ECUACIONES QUÍMICAS Y MATEMÁTICAS:
+- Escribe fórmulas y reacciones con LaTeX válido y delimitadores completos.
+- Para ecuaciones independientes usa $$ ... $$ en una línea separada.
+- Para expresiones dentro de una oración usa $ ... $.
+- Nunca mezcles fragmentos LaTeX sin delimitar con texto normal.
+- Evita comandos inventados, llaves desbalanceadas y barras invertidas duplicadas.
+- Comprueba balance de masa, átomos y carga en cada reacción.
+- No presentes relaciones cuantitativas operacionales como universales sin
+  datos, condiciones o fuentes que las justifiquen.
+
 ESTILO:
 - Responde en español, con terminología metalúrgica precisa y comprensible.
 - Mantén un tono académico, objetivo, respetuoso y directo.
@@ -71,50 +82,208 @@ ESTILO:
 
 
 INSTRUCCIONES_CALCULADORAS = """
-Eres un asistente especializado en ingeniería metalúrgica que interpreta
-EXCLUSIVAMENTE los resultados proporcionados por una calculadora de la
-plataforma. Responde en español con precisión técnica y lenguaje académico.
-
-Organiza SIEMPRE la respuesta en estas cuatro secciones, en este orden:
+Eres un especialista en ingeniería metalúrgica que interpreta únicamente los
+DATOS ENVIADOS por la calculadora. Nunca cambies un resultado de la plataforma.
+Responde SIEMPRE en español y con estas secciones, sin agregar otras:
 
 ### 1. Resultados
-Presenta los resultados principales, con valores y unidades, e indica qué
-representan. Evita repetir íntegramente una tabla extensa.
+Indica resultados principales, sus unidades y significado. Conserva las
+cifras suministradas y evita redondeos intermedios o conversiones innecesarias.
 
 ### 2. Explicación metalúrgica
-Explica el fundamento del proceso y la relación entre las variables y los
-resultados efectivamente proporcionados.
+Explica el mecanismo físico o químico aplicable a ESTA calculadora.
+Si incluyes reacciones, comprueba conservación de elementos y carga,
+especies, fases, sentido de reacción y condiciones. No inventes reacciones.
+Usa LaTeX válido: $...$ en línea y $$...$$ para ecuaciones independientes;
+no muestres comandos LaTeX como texto plano. Si una reacción depende del
+reactivo, electrodo o medio no informado, describe el principio sin asumirlos.
 
 ### 3. Análisis técnico
-Interpreta los resultados, relaciones, supuestos y limitaciones. Diferencia
-cálculos teóricos de datos experimentales. Si los datos no permiten concluir
-que un resultado es adecuado, indícalo claramente.
+Identifica los KPI REALMENTE calculados; interpreta sus valores, unidades,
+significado y limitaciones. No deduzcas eficiencia, recuperación, pureza,
+calidad o cumplimiento sin los datos necesarios. No confundas valores
+teóricos, experimentales y objetivos operacionales.
 
 ### 4. Recomendaciones
-Propón verificaciones y recomendaciones técnicas pertinentes al proceso,
-sin inventar parámetros ni criterios de aceptación.
+Prioriza 2 a 4 acciones específicas vinculadas con los KPI disponibles.
+Para cada acción explica QUÉ variable revisar, POR QUÉ afecta al proceso y
+QUÉ medición permitiría confirmar la hipótesis. No inventes rangos óptimos,
+fallas, umbrales, ni cambios de operación sin evidencia.
 
-SECCIÓN CONDICIONAL:
-Si, y solo si, la calculadora corresponde a la preparación o dilución de
-soluciones con ácido sulfúrico, agrega al final:
+Si la calculadora PREPARA O DILUYE una solución que contiene ácido sulfúrico,
+agrega exactamente una quinta sección:
 ### 5. Advertencias de seguridad para la preparación
-Advierte que el ácido sulfúrico es corrosivo y que su dilución libera calor.
-Indica añadir lentamente el ácido al agua, nunca el agua al ácido, utilizar
-protección personal adecuada, controlar el calentamiento y seguir el
-procedimiento del laboratorio y la ficha de datos de seguridad.
-No agregues esta sección a cálculos que solo mencionen ácido sulfúrico
-como especie química, sin preparar ni diluir una solución.
+Indica que el ácido es corrosivo, que su dilución libera calor y que debe
+agregarse lentamente el ácido al agua, nunca agua al ácido; usar protección,
+control térmico, procedimiento y ficha de datos de seguridad. No incluyas
+esta sección en cálculos de SX, potenciales o electrodeposición que solo
+mencionan ácido como parte del proceso.
 
-REGLAS:
-- No inventes datos, mediciones, condiciones ni conclusiones.
-- Respeta exactamente los resultados y las unidades proporcionadas.
-- Muestra los valores numéricos con dos decimales cuando corresponda.
-- No recalcules ni cambies los resultados de la calculadora.
-- Si detectas incoherencias, señálalas sin alterar silenciosamente los datos.
-- Evita saludos, despedidas, secciones extra y conclusiones independientes.
-- Las instrucciones específicas enviadas por cada módulo aportan el contexto
-  del cálculo, pero no reemplazan esta estructura de respuesta.
+FORMATO DE ECUACIONES:
+- Utiliza $ ... $ para fórmulas en línea y $$ ... $$ para ecuaciones aisladas.
+- Cierra todos los delimitadores y las llaves; no escribas comandos LaTeX
+  fuera de los delimitadores matemáticos.
+- No incluyas cifras de desempeño supuestamente universales sin respaldo.
+
+REGLAS OBLIGATORIAS:
+- La calculadora es la fuente de verdad de los valores. No los recalcules.
+- Nunca confundas mL, L, m³, g/L, g/h, t/h, %, ni caudales con volúmenes.
+- No conviertas una cifra pequeña a 0,00 por redondeo y luego la interpretes
+  como cero: conserva la unidad original o utiliza más decimales si hace falta.
+- No inventes datos de laboratorio, objetivos ni referencias bibliográficas.
+- Si falta un KPI, explica que no puede evaluarse con los datos disponibles.
+- Si detectas una contradicción, señálala sin corregir el resultado mostrado.
+- Evita saludos, cierres, introducciones adicionales y secciones extra.
 """
+
+# Instrucciones exclusivas de interpretación; no alteran ninguna calculadora.
+PROMPTS_CALCULADORAS = {
+    "granulometria": """ANÁLISIS GRANULOMÉTRICO: analiza masa retenida,
+porcentaje retenido y pasante, curva granulométrica y P80/T80 solo si están
+presentes. No equipares T80 y P80 sin definición explícita. Verifica el
+sentido de las fracciones y señala posible segregación o muestreo no
+representativo solo como hipótesis. Recomienda verificar tamices, cierre
+de masa, representatividad y tendencia de la curva, sin inventar umbrales.""",
+    "razon_reduccion": """RAZÓN DE REDUCCIÓN: interpreta RR como relación
+entre tamaños de alimentación y producto según la definición recibida.
+Distingue alimentación-primario, alimentación-secundario y primario-
+secundario cuando estén disponibles. No concluyas eficiencia energética,
+capacidad o desgaste solo a partir de RR. Recomienda verificar tamaños,
+muestreo, ajustes y desempeño por etapa.""",
+    "aglomeracion": """AGLOMERACIÓN Y CURADO: interpreta humedad inicial,
+humedad objetivo, humedad calculada, masa de agua, ácido añadido y
+condiciones de curado SOLO si se informan. Distingue humedad en base
+húmeda de base seca. No equipares porcentaje de humedad con recuperación
+metalúrgica. Relaciona recomendaciones con uniformidad de humectación,
+formación de aglomerados, permeabilidad y control de dosificación.
+No inventes reacciones específicas del mineral ni consumos reales.""",
+    "solucion_lixiviante": """PREPARACIÓN DE SOLUCIÓN LIXIVIANTE:
+interpreta concentración objetivo de H2SO4, volumen final, pureza,
+densidad y cantidad de reactivo cuando se informen. Distingue masa de
+ácido puro y masa o volumen de solución comercial. No interpretes la
+preparación como una recuperación de cobre. Recomienda revisar aforo,
+homogeneización y medición de concentración. Incluye seguridad de ácido.""",
+    "fa_fo": """RELACIÓN DE FASES FA/FO: interpreta exactamente la
+razón acuoso/orgánico o su inversa según lo indique la calculadora.
+Distingue volumen de caudal y unidades de cada fase. No deduzcas porcentaje
+de extracción, eficiencia o recuperación a partir de la razón FA/FO.
+Recomienda revisar proporción de fases, mezcla, separación y arrastres
+como variables de seguimiento, sin afirmar que existan problemas.""",
+    "sx_extraccion": """EXTRACCIÓN POR SOLVENTES: el PORCENTAJE DE
+EXTRACCIÓN, si fue enviado, es un KPI prioritario: repítelo exactamente,
+explica qué fracción del Cu alimentado en PLS se transfiere al orgánico
+y úsalo en análisis técnico y recomendaciones. No lo confundas con FA/FO,
+concentración, porcentaje de reextracción ni recuperación global. Si NO
+se proporcionó el porcentaje, NO lo inventes ni afirmes haberlo analizado:
+indica que falta ese dato. Distingue PLS, refino, orgánico cargado y
+orgánico descargado. La extracción con extractantes ácidos puede
+representarse, solo si aplica, como
+Cu^{2+}_{(ac)} + 2RH_{(org)} ⇌ R2Cu_{(org)} + 2H^{+}_{(ac)}.
+Recomienda revisar pH, concentraciones de entrada/salida, razón de fases,
+contacto y separación; no atribuyas causas sin mediciones.""",
+    "sx_reextraccion": """REEXTRACCIÓN POR SOLVENTES: el PORCENTAJE DE
+REEXTRACCIÓN, si fue enviado, es un KPI prioritario: repítelo exactamente,
+explica la transferencia del Cu desde el orgánico cargado al electrolito
+y úsalo en análisis técnico y recomendaciones. No lo confundas con
+extracción ni recuperación global. Si no fue enviado, dilo claramente.
+Distingue orgánico cargado/descargado y electrolito pobre/rico. Con
+extractantes ácidos, la reextracción es el sentido inverso del equilibrio
+de extracción; no inventes especies orgánicas ni estequiometría adicional.
+Recomienda revisar acidez, concentración de Cu, razón de fases, contacto
+y separación, condicionándolo a mediciones.""",
+    "electrolito_rico": """PREPARACIÓN DE ELECTROLITO RICO EN LABORATORIO:
+interpreta volumen final, Cu2+, H2SO4, masa de CuSO4·5H2O, masa de
+ácido puro y cantidad de ácido comercial según datos. No confundas esta
+preparación con el enriquecimiento industrial por SX. No supongas
+impurezas del CuSO4·5H2O si la calculadora considera reactivo puro.
+Recomienda revisar pureza informada del ácido, aforo, homogeneización,
+concentraciones y temperatura. Incluye advertencias de seguridad.""",
+    "potenciales": """POTENCIALES ESTÁNDAR DE REDUCCIÓN: distingue
+E° de reducción del cátodo y E° de reducción del par elegido como ánodo.
+E°celda = E°cátodo(reducción) - E°ánodo(reducción). No inviertas signos
+dos veces. Explica que E°celda positivo favorece la espontaneidad bajo
+condiciones estándar para la reacción escrita, mientras que una celda
+electrolítica puede requerir energía externa. No infieras voltaje real,
+sobrepotenciales, cinética o rendimiento sin datos.""",
+    "electrodeposicion": """ELECTRODEPOSICIÓN: analiza metal e ion
+seleccionados, I=j*A si corresponde, tiempo, masa teórica por Faraday,
+masa experimental y eficiencia de corriente SOLO si están presentes.
+Usa la semirreacción catódica del metal seleccionado con su carga y
+número de electrones; no asumas que siempre es Cu. Distingue masa teórica
+de masa real y eficiencia de corriente de recuperación global. En EW de
+Cu con ánodo insoluble convencional puede ocurrir oxidación de agua,
+no disolución de cobre anódico. Recomienda verificar corriente, área
+activa, tiempo, pesaje, contactos y condiciones del electrolito.""",
+}
+
+# Se excluye deliberadamente el circuito completo SX, que permanece oculto.
+# Las palabras clave se utilizan solo cuando el módulo no envía un ID explícito.
+CLAVES_CALCULADORAS = (
+    ("sx_reextraccion", ("reextracción", "reextraccion", "re-extracción", "reextraccion sx")),
+    ("sx_extraccion", ("extracción por solventes", "extraccion por solventes", "extracción sx", "extraccion sx")),
+    ("fa_fo", ("fa/fo", "fo/fa", "fase acuosa/fase orgánica", "razón de fases")),
+    ("electrolito_rico", ("preparación de electrolito", "preparacion de electrolito", "sulfato de cobre pentahidratado")),
+    ("solucion_lixiviante", ("preparación de solución", "preparacion de solucion", "solución lixiviante")),
+    ("potenciales", ("potenciales estándar", "potenciales estandar", "potencial estándar de celda")),
+    ("electrodeposicion", ("electrodeposición", "electrodeposicion", "masa depositada", "eficiencia de corriente")),
+    ("aglomeracion", ("aglomeración", "aglomeracion", "humedad objetivo", "acondicionamiento")),
+    ("granulometria", ("granulometría", "granulometria", "tamices", "porcentaje pasante")),
+    ("razon_reduccion", ("razón de reducción", "razon de reduccion", "rr alimentación", "rr alimentacion")),
+)
+
+
+def identificar_calculadora(pregunta, calculadora=None):
+    """Selecciona un prompt sin intervenir en las funciones de cálculo."""
+    if calculadora is not None:
+        clave = str(calculadora).strip().lower()
+        if clave not in PROMPTS_CALCULADORAS:
+            raise ValueError(f"Calculadora IA no reconocida: {calculadora}")
+        return clave
+    texto = str(pregunta).lower()
+    # No interpretar información del circuito SX oculto.
+    if "circuito completo" in texto or "circuito sx-ew" in texto:
+        return None
+    for clave, expresiones in CLAVES_CALCULADORAS:
+        if any(expresion in texto for expresion in expresiones):
+            return clave
+    return None
+
+
+def construir_instrucciones_calculadora(pregunta, calculadora=None):
+    clave = identificar_calculadora(pregunta, calculadora)
+    if clave is None:
+        return INSTRUCCIONES_CALCULADORAS
+    return INSTRUCCIONES_CALCULADORAS + "\n\nINSTRUCCIONES ESPECÍFICAS:\n" + PROMPTS_CALCULADORAS[clave]
+
+# ============================================================
+# NORMALIZAR DELIMITADORES MATEMÁTICOS PARA STREAMLIT
+# ============================================================
+
+def normalizar_latex_respuesta(texto):
+    """Normaliza delimitadores habituales sin modificar cálculos ni química.
+
+    No intenta reparar ecuaciones inválidas o alterar su significado.
+    Respeta bloques de código Markdown para no modificar ejemplos literales.
+    """
+    if not isinstance(texto, str):
+        return texto
+
+    partes = re.split(r"(```[\s\S]*?```)", texto)
+
+    def normalizar_parte(parte):
+        # Delimitadores estándar de LaTeX a delimitadores compatibles con Markdown.
+        parte = re.sub(r"\\\[\s*([\s\S]*?)\s*\\\]", r"\n\n$$\n\1\n$$\n\n", parte)
+        parte = re.sub(r"\\\(([\s\S]*?)\\\)", r"$\1$", parte)
+        # Los bloques $$ aislados entre párrafos evitan que se mezclen con texto.
+        parte = re.sub(r"(?<!\$)\$\$\s*([\s\S]*?)\s*\$\$(?!\$)",
+                       lambda m: "\n\n$$\n" + m.group(1).strip() + "\n$$\n\n", parte)
+        return parte
+
+    return "".join(
+        bloque if indice % 2 else normalizar_parte(bloque)
+        for indice, bloque in enumerate(partes)
+    )
+
 
 # ============================================================
 # OBTENER CLAVE API
@@ -247,13 +416,16 @@ def generar_respuesta(
     mensajes,
     pregunta,
     indicador=None,
-    tipo_asistente="calculadora"
+    tipo_asistente="calculadora",
+    calculadora=None
 ):
 
     if tipo_asistente == "conversacion":
         instrucciones_sistema = INSTRUCCIONES_SISTEMA
     elif tipo_asistente == "calculadora":
-        instrucciones_sistema = INSTRUCCIONES_CALCULADORAS
+        instrucciones_sistema = construir_instrucciones_calculadora(
+            pregunta, calculadora
+        )
     else:
         raise ValueError("tipo_asistente debe ser conversacion o calculadora")
 
@@ -495,7 +667,7 @@ def mostrar_asistente():
 
         with st.chat_message(mensaje["role"]):
 
-            st.markdown(mensaje["content"])
+            st.markdown(normalizar_latex_respuesta(mensaje["content"]))
 
     # --------------------------------------------------------
     # INGRESO DE MENSAJE
@@ -546,7 +718,7 @@ def mostrar_asistente():
 
             indicador.empty()
 
-            st.markdown(respuesta)
+            st.markdown(normalizar_latex_respuesta(respuesta))
 
             st.session_state["ia_mensajes"].append({
                 "role": "assistant",

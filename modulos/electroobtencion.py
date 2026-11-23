@@ -386,92 +386,157 @@ def calcular_deposito_laboratorio(
 # ============================================================
 
 def mostrar_fundamentos_ew():
-
     st.title("⚡ Fundamentos de Electroobtención")
 
     st.write(
-        "La electroobtención de cobre es un proceso "
-        "electroquímico que utiliza corriente continua "
-        "para reducir los iones de cobre presentes "
-        "en una solución electrolítica y depositarlos "
-        "como cobre metálico sobre cátodos."
+        "La electroobtención (EW) es un proceso electroquímico que permite recuperar "
+        "cobre desde una solución electrolítica mediante la aplicación de corriente "
+        "eléctrica continua. Los iones de cobre se reducen y se depositan como "
+        "cobre metálico sobre el cátodo."
     )
 
-    st.markdown("---")
-
-    st.markdown("### 🔬 Reacciones Electroquímicas")
-
-    st.markdown("#### Cátodo: reducción del cobre")
-
-    st.latex(
-        r"Cu^{2+}_{(ac)} + 2e^- "
-        r"\rightarrow Cu^0_{(s)}"
-    )
-
+    st.header("1. Fundamentos electroquímicos")
     st.write(
-        "En el cátodo, los iones de cobre ganan "
-        "electrones y se depositan en forma metálica."
+        "La electroobtención se fundamenta en reacciones de oxidación y reducción "
+        "(redox), que implican transferencia de electrones. La electrólisis utiliza "
+        "una diferencia de potencial externa para impulsar reacciones no espontáneas."
+    )
+    st.markdown("**Oxidación:** pérdida de electrones.")
+    st.latex(r"Cu_{(s)} \rightarrow Cu^{2+}_{(ac)} + 2e^-")
+    st.markdown("**Reducción:** ganancia de electrones.")
+    st.latex(r"Cu^{2+}_{(ac)} + 2e^- \rightarrow Cu_{(s)}")
+    st.caption(
+        "Las dos expresiones anteriores ilustran las semirreacciones generales "
+        "de oxidación y reducción del cobre; "
+        "no representan por sí solas las dos reacciones de una celda EW convencional."
     )
 
-    st.markdown("#### Ánodo: oxidación del agua")
+    st.header("2. Ánodo y cátodo en electroobtención")
+    col_anodo, col_catodo = st.columns(2)
+    with col_anodo:
+        st.markdown("**Ánodo (+): oxidación**")
+        st.write(
+            "En una celda de electroobtención convencional con ánodos insolubles, "
+            "ocurre la oxidación del agua y se libera oxígeno."
+        )
+        st.latex(r"H_2O \rightarrow \frac{1}{2}O_{2(g)} + 2H^+_{(ac)} + 2e^-")
+    with col_catodo:
+        st.markdown("**Cátodo (−): reducción**")
+        st.write(
+            "Los iones de cobre de la solución reciben electrones y forman "
+            "un depósito de cobre metálico."
+        )
+        st.latex(r"Cu^{2+}_{(ac)} + 2e^- \rightarrow Cu_{(s)}")
 
-    st.latex(
-        r"H_2O \rightarrow "
-        r"\frac{1}{2}O_{2(g)} + 2H^+_{(ac)} + 2e^-"
-    )
-
+    st.header("3. Electrolito")
     st.write(
-        "En un sistema convencional con ánodos "
-        "insolubles, el agua se oxida y se genera "
-        "oxígeno gaseoso."
+        "El electrolito es una solución que contiene iones móviles y permite "
+        "el transporte de corriente eléctrica mediante movimiento iónico. "
+        "Su composición influye en la conductividad, la eficiencia de corriente "
+        "y la calidad del depósito catódico."
+    )
+    st.markdown("**Composición referencial del electrolito:**")
+    st.dataframe(
+        pd.DataFrame({
+            "Componente": ["Ácido sulfúrico (H₂SO₄)", "Cobre (Cu²⁺)",
+                           "Hierro (Fe²⁺/Fe³⁺)", "Cloruro (Cl⁻)", "Arsénico (As)"],
+            "Concentración": ["150–200 g/L", "35–45 g/L", "< 2 g/L",
+                              "< 30 g/L", "< 5 g/L"],
+            "Observación": ["Acidez", "Metal de interés", "Impureza",
+                            "Impureza", "Impureza"]
+        }),
+        hide_index=True,
+        use_container_width=True
+    )
+    st.caption(
+        "Los valores indicados son referenciales; "
+        "no se presentan como límites universales de operación."
+    )
+    st.markdown(
+        "- **Conductividad:** una conductividad elevada disminuye la resistencia eléctrica.\n"
+        "- **Concentración de Cu²⁺:** influye en la disponibilidad de cobre y en la morfología del depósito.\n"
+        "- **Impurezas:** pueden perjudicar la pureza y la calidad del cátodo."
     )
 
-    st.markdown("---")
+    st.header("4. Electrólisis y tipos de celdas")
+    st.write(
+        "La electrólisis es un proceso electroquímico no espontáneo que consume "
+        "energía eléctrica para producir transformaciones químicas. En EW se "
+        "utilizan celdas electrolíticas con ánodos, cátodos y una solución conductora."
+    )
+    st.table(pd.DataFrame({
+        "Característica": ["Reacción redox", "Electricidad", "Ánodo",
+                           "Cátodo", "Transformación de energía"],
+        "Celda galvánica": ["Espontánea", "Genera", "Negativo (oxidación)",
+                             "Positivo (reducción)", "Química → eléctrica"],
+        "Celda electrolítica": ["No espontánea", "Consume", "Positivo (oxidación)",
+                                "Negativo (reducción)", "Eléctrica → química"]
+    }))
 
-    st.markdown("### ⚙️ Principales Variables Operacionales")
+    st.header("5. Variables operacionales")
+    st.markdown(
+        "- **Intensidad de corriente (A):** influye en la masa teórica que puede depositarse.\n"
+        "- **Densidad de corriente (A/m²):** relaciona la intensidad con el área catódica activa.\n"
+        "- **Voltaje de celda (V):** diferencia de potencial necesaria para sostener el proceso.\n"
+        "- **Concentraciones de cobre y ácido sulfúrico:** afectan la disponibilidad de iones y las propiedades del electrolito.\n"
+        "- **Impurezas:** pueden alterar la calidad del depósito.\n"
+        "- **Temperatura:** modifica la conductividad, la viscosidad y la transferencia de masa.\n"
+        "- **Circulación del electrolito y distribución de corriente:** influyen en la uniformidad del depósito."
+    )
 
-    col1, col2, col3 = st.columns(3)
+    st.header("6. Potencial estándar de reducción")
+    st.write(
+        "El potencial estándar de reducción expresa la tendencia de una especie "
+        "a ganar electrones bajo condiciones estándar. Se mide respecto del "
+        "electrodo estándar de hidrógeno, cuyo potencial es 0,00 V."
+    )
+    st.latex(r"E^\circ_{\mathrm{celda}} = E^\circ_{\mathrm{cátodo}} - E^\circ_{\mathrm{ánodo}}")
+    st.write(
+        "Un potencial de reducción más positivo indica una mayor tendencia relativa "
+        "a reducirse; uno más negativo indica una menor tendencia relativa. "
+        "Los potenciales estándar no describen por sí solos el comportamiento "
+        "real de una celda, que también depende de temperatura, concentración "
+        "y fenómenos superficiales."
+    )
 
-    with col1:
-        st.markdown(
-            tarjeta_resultado(
-                "Densidad de Corriente",
-                "Variable",
-                "A/m²",
-                "#3b82f6"
-            ),
-            unsafe_allow_html=True
-        )
+    st.header("7. Intensidad y densidad de corriente")
+    st.write(
+        "La intensidad de corriente es la cantidad de carga que circula por unidad "
+        "de tiempo. La densidad de corriente relaciona esta intensidad con "
+        "la superficie catódica activa."
+    )
+    st.latex(r"I = j \cdot A")
+    st.latex(r"j = \frac{I}{A}")
+    st.caption("I: intensidad (A); j: densidad de corriente (A/m²); A: área catódica activa (m²).")
+    st.write(
+        "Una densidad de corriente excesiva respecto de las condiciones de "
+        "transferencia de masa puede favorecer depósitos irregulares."
+    )
 
-    with col2:
-        st.markdown(
-            tarjeta_resultado(
-                "Eficiencia de Corriente",
-                "Variable",
-                "%",
-                "#22c55e"
-            ),
-            unsafe_allow_html=True
-        )
-
-    with col3:
-        st.markdown(
-            tarjeta_resultado(
-                "Voltaje de Celda",
-                "Variable",
-                "V",
-                "#f59e0b"
-            ),
-            unsafe_allow_html=True
-        )
-
+    st.header("8. Ley de Faraday y masa depositada")
+    st.write(
+        "La primera ley de Faraday establece que la masa depositada es proporcional "
+        "a la carga eléctrica que circula. Permite estimar la masa teórica "
+        "de cobre depositable a partir de la intensidad, el tiempo y las "
+        "propiedades electroquímicas del metal."
+    )
+    st.latex(r"m_F = \frac{I \cdot t \cdot M}{n \cdot F}")
+    st.markdown(
+        "**Donde:** m_F es la masa teórica (g); I, la intensidad (A); "
+        "t, el tiempo (s); M, la masa molar (g/mol); n, el número de electrones; "
+        "y F, la constante de Faraday (96.485 C/mol de electrones)."
+    )
+    st.write(
+        "La masa experimental corresponde al metal efectivamente depositado. "
+        "Puede determinarse por diferencia entre la masa final y la inicial "
+        "del cátodo, después de su limpieza y secado."
+    )
+    st.latex(r"m_{\mathrm{real}} = m_f - m_i")
+    st.latex(r"\eta = \frac{m_{\mathrm{real}}}{m_F} \times 100\%")
     st.info(
-        "La masa teórica depositada depende de la "
-        "intensidad de corriente, el tiempo de electrólisis "
-        "y las propiedades electroquímicas del metal. "
-        "La eficiencia experimental se determina "
-        "comparando la masa realmente depositada "
-        "con la masa teórica de Faraday."
+        "La masa farádica es un valor teórico. La eficiencia de corriente "
+        "permite comparar la masa realmente obtenida con la masa calculada "
+        "mediante la ley de Faraday."
     )
 
 
@@ -1567,6 +1632,24 @@ def mostrar_calculadora_ew():
                 "No añadas apartados adicionales ni inventes mediciones. "
                 "Respeta las cifras calculadas y las unidades originales. "
                 "Distingue claramente las hipótesis de los datos medidos.\n\n"
+                "INSTRUCCIONES ESPECÍFICAS PARA ELECTRODEPOSICIÓN: "
+                "En 1. Resultados, incluye metal, densidad de corriente, área, "
+                "intensidad realmente utilizada y su origen, tiempo, masa teórica, "
+                "método y masa real si existe, y eficiencia experimental solo si fue calculada. "
+                "No confundas intensidad calculada con intensidad manual utilizada. "
+                "En 2. Explicación metalúrgica, explica la reducción catódica del metal "
+                "seleccionado, I=j·A y la ley de Faraday, usando el número de electrones correcto. "
+                "En 3. Análisis técnico, compara masa teórica y masa real solo cuando ambas existan; "
+                "interpreta la eficiencia tal como la calcula la plataforma, considerando que "
+                "las masas se redondean a dos decimales antes de dividir. "
+                "No atribuyas diferencias a reacciones secundarias, desprendimiento, "
+                "impurezas ni pérdidas de material como hechos comprobados. "
+                "En 4. Recomendaciones, propone comprobaciones de área activa, intensidad, "
+                "tiempo, limpieza y secado del cátodo, y precisión del pesaje según los datos. "
+                "No inventes eficiencia si no hay masa real ni recomiendes consumo energético. "
+                "No presentes condiciones industriales como si hubieran sido medidas. "
+                "Cuando sea pertinente, menciona precauciones eléctricas y de manejo de electrolitos "
+                "dentro de las recomendaciones, sin crear una quinta sección.\n\n"
                 "Eres un asistente especializado en electroobtención "
                 "y electrodeposición de metales. Explica exclusivamente "
                 "los resultados reales de este ensayo, en español, "

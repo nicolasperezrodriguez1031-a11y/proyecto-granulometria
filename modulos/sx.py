@@ -881,6 +881,23 @@ def mostrar_calculadora_fa_fo():
             )
 
             prompt += INSTRUCCIONES_IA_SX
+            prompt += (
+                "\n\nCRITERIOS ESPECÍFICOS PARA FA/FO:\n"
+                "En 1. Resultados, presenta el volumen total, la razón FA/FO, "
+                "los volúmenes de cada fase y sus porcentajes, con las unidades recibidas. "
+                "En 2. Explicación metalúrgica, explica FA/FO = Va/Vo, la distribución "
+                "volumétrica y el papel de ambas fases en la extracción por solventes. "
+                "En 3. Análisis técnico, interpreta si predomina la fase acuosa u orgánica "
+                "según los valores y comenta que se supone aditividad de volúmenes, "
+                "sin pérdidas, contracción ni arrastres. Distingue esta razón volumétrica "
+                "de los caudales reales y del rendimiento de extracción; no deduzcas "
+                "recuperación, capacidad de carga, equilibrio ni separación de fases "
+                "sin datos adicionales. En 4. Recomendaciones, sugiere comprobaciones "
+                "de volúmenes, medición y homogeneidad de la preparación, y evaluación "
+                "experimental de la separación cuando corresponda. "
+                "No supongas tiempos de mezcla, pH, composición del orgánico ni concentraciones "
+                "de cobre no proporcionadas. Mantén un lenguaje técnico conciso y preciso."
+            )
 
             api_key = obtener_api_key()
             if not api_key:
@@ -1798,7 +1815,6 @@ def mostrar_sx():
                     "hidrometalurgia y extracción por solventes (SX). "
                     "Interpreta los resultados siguientes en español, con rigor "
                     "técnico y sin inventar datos. No cambies los cálculos.\n\n"
-                    f"Modo de cálculo: {modo_calculo}\n"
                     f"Corriente cuya concentración se calculó: {corriente_a_calcular}\n"
                     f"{'Volumen' if modo_laboratorio else 'Caudal'} de fase acuosa: "
                     f"{pls_flow * factor_volumen if modo_laboratorio else pls_flow:.2f} {unidad_volumen}\n"
@@ -1810,13 +1826,42 @@ def mostrar_sx():
                     f"Concentración Cu en orgánico cargado: {cu_org_cargado:.2f} g/L\n"
                     f"Cobre total de entrada: {masa_entrada_unidad:.2f} {unidad_masa}\n"
                     f"Cobre total de salida: {masa_salida_unidad:.2f} {unidad_masa}\n"
-                    f"Diferencia del balance: {diferencia_unidad:.2f} {unidad_masa}\n\n"
+                    f"Diferencia del balance: {diferencia_unidad:.2f} {unidad_masa}\n"
+                    f"Recuperación de extracción calculada: {resultados['recuperacion']:.2f} %\n"
+                    f"Cobre transferido: {masa_transferida_unidad:.2f} {unidad_masa}\n"
+                    f"Relación A/O: {pls_flow / org_flow:.2f}\n\n"
                     "Explica el balance de cobre, la corriente calculada, "
                     "el significado de las concentraciones y los supuestos "
-                    "del modelo. Distingue masa de flujo másico según el modo "
-                    "y no infieras recuperaciones experimentales no medidas."
+                    "del modelo. Interpreta las magnitudes usando las unidades "
+                    "proporcionadas y no infieras recuperaciones experimentales no medidas."
                 )
                 prompt += INSTRUCCIONES_IA_SX
+                prompt += (
+                    "\n\nCRITERIOS ESPECÍFICOS PARA EXTRACCIÓN SX:\n"
+                    "No menciones modos de cálculo, modalidades alternativas ni funciones ocultas. "
+                    "En 1. Resultados, organiza los volúmenes de las fases, las cuatro "
+                    "concentraciones de Cu, la concentración despejada, las masas de entrada "
+                    "y salida y la diferencia del balance con sus unidades. Incluye "
+                    "obligatoriamente la recuperación de extracción calculada, el cobre "
+                    "transferido y la relación A/O que se entregan expresamente arriba. "
+                    "No afirmes que estos indicadores faltan ni los recalcules; "
+                    "distingue la recuperación calculada del modelo de una medición experimental. "
+                    "En 2. Explicación metalúrgica, explica la transferencia de Cu desde "
+                    "el PLS al orgánico mediante el extractante y la generación de refino; "
+                    "distingue las corrientes de entrada y salida y describe el balance "
+                    "de Cu como conservación de masa. "
+                    "En 3. Análisis técnico, interpreta las diferencias entre Cu del PLS "
+                    "y del refino y entre orgánico descargado y cargado; comenta el cierre "
+                    "del balance como consecuencia del modelo y la hipótesis de volúmenes "
+                    "constantes por fase. No afirmes equilibrio químico, selectividad, "
+                    "cinética, extracción real medida ni eficiencia operacional a partir "
+                    "del mero cierre matemático. Respeta que en modo laboratorio se usan "
+                    "masas en g o kg y volúmenes en mL o L, NO flujos por hora. "
+                    "En 4. Recomendaciones, propone verificar concentraciones analíticas, "
+                    "volúmenes, muestreo de ambas fases y consistencia del balance, "
+                    "sin imponer condiciones no entregadas. Evita confundir la relación "
+                    "A/O con la recuperación de cobre."
+                )
                 api_key = obtener_api_key()
                 if not api_key:
                     raise ValueError("No se encontró la clave API de Gemini.")
@@ -2174,7 +2219,6 @@ def mostrar_sx():
                     "resultados en español, sin inventar datos ni cambiar los cálculos. "
                     "Distingue la transferencia desde el orgánico al electrolito y "
                     "aclara que un balance cerrado no demuestra equilibrio químico.\n\n"
-                    f"Modo: {modo_calculo}\n"
                     f"Concentración calculada: {corriente_a_calcular}\n"
                     f"Fase acuosa: {flujo_acuoso_ingresado:.2f} {unidad_volumen}\n"
                     f"Fase orgánica: {flujo_organico_ingresado:.2f} {unidad_volumen}\n"
@@ -2183,11 +2227,35 @@ def mostrar_sx():
                     f"Electrolito pobre: {cp:.2f} g/L\n"
                     f"Electrolito rico: {cr:.2f} g/L\n"
                     f"Cobre transferido: {mostrar_masa(transferido):.2f} {unidad_masa}\n"
-                    f"Re-extracción del orgánico: {eficiencia:.2f}%\n"
+                    f"Porcentaje de reextracción calculado: {eficiencia:.2f} %\n"
                     f"Relación A/O: {relacion:.2f}\n"
                     f"Diferencia del balance: {mostrar_masa(entrada-salida):.2f} {unidad_masa}"
                 )
                 prompt += INSTRUCCIONES_IA_SX
+                prompt += (
+                    "\n\nCRITERIOS ESPECÍFICOS PARA REEXTRACCIÓN SX:\n"
+                    "No menciones modos de cálculo, modalidades alternativas ni funciones ocultas. "
+                    "En 1. Resultados, presenta las concentraciones de orgánico cargado, "
+                    "orgánico descargado, electrolito pobre y rico, la concentración "
+                    "despejada, cobre transferido, porcentaje de reextracción del orgánico, "
+                    "relación A/O y diferencia del balance, con las unidades proporcionadas. "
+                    "Incluye obligatoriamente el porcentaje de reextracción calculado "
+                    "que se entrega arriba, sin omitirlo, inventarlo ni recalcularlo. "
+                    "En 2. Explicación metalúrgica, explica que el Cu pasa desde el orgánico "
+                    "cargado al electrolito acuoso, enriqueciendo el electrolito y dejando "
+                    "orgánico descargado para su recirculación; explica el balance de Cu "
+                    "sin atribuir composiciones de reactivos no indicadas. "
+                    "En 3. Análisis técnico, interpreta la disminución de Cu en el orgánico "
+                    "y el aumento en el electrolito; distingue el porcentaje calculado "
+                    "de reextracción del orgánico de una recuperación global del circuito. "
+                    "Aclara que el cierre del balance es matemático y no verifica por sí "
+                    "mismo equilibrio, cinética ni resultados experimentales. "
+                    "Respeta que en laboratorio se manejan volúmenes y masas, no flujos "
+                    "másicos horarios. En 4. Recomendaciones, sugiere contrastar las "
+                    "concentraciones mediante análisis, revisar volúmenes, muestreo y "
+                    "separación de fases cuando sea pertinente. No inventes pH, acidez, "
+                    "temperatura, número de etapas ni eficiencias experimentales."
+                )
                 api_key = obtener_api_key()
                 if not api_key:
                     raise ValueError("No se encontró la clave API de Gemini.")
