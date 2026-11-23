@@ -259,9 +259,11 @@ def mostrar_inicio():
         ),
         (
             "6. ELECTROOBTENCIÓN",
-            "Proceso electroquímico en el cual se "
-            "aplica corriente eléctrica para depositar "
-            "el cobre disuelto sobre los cátodos."
+            "La electroobtención es un proceso electroquímico que permite "
+            "recuperar el cobre presente en una solución electrolítica "
+            "mediante la aplicación de corriente eléctrica continua. "
+            "Durante el proceso, los iones de cobre se reducen y depositan "
+            "sobre los cátodos, formando cobre metálico de alta pureza."
         ),
         (
             "7. CÁTODO",
